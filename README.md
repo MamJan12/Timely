@@ -29,6 +29,12 @@
 
 ```bash
 $ npm install
+
+$ docker compose up timely-db -d
+
+$ npx prisma migrate dev
+
+$ npx prisma generate
 ```
 
 ## Compile and run the project

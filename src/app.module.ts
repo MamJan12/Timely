@@ -1,11 +1,17 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
-import { CourseModule } from './course/course.module';
-import { LecturersModule } from './lecturers/lecturers.module';
-import { StudentsModule } from './students/students.module';
-import { ExamsModule } from './exams/exams.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CourseModule } from './modules/course/course.module';
+import { LecturersModule } from './modules/lecturers/lecturers.module';
+import { StudentsModule } from './modules/students/students.module';
+import { ExamsModule } from './modules/exams/exams.module';
 
 @Module({
-  imports: [AuthModule, CourseModule, LecturersModule, StudentsModule, ExamsModule],
+  imports: [
+    AuthModule,
+    CourseModule,
+    LecturersModule,
+    StudentsModule,
+    ExamsModule,
+  ],
 })
 export class AppModule {}
