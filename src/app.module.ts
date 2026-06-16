@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+<<<<<<< HEAD
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -35,6 +36,21 @@ import { UsersModule } from './modules/users/users.module';
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+=======
+import { AuthModule } from './modules/auth/auth.module';
+import { CourseModule } from './modules/course/course.module';
+import { LecturersModule } from './modules/lecturers/lecturers.module';
+import { StudentsModule } from './modules/students/students.module';
+import { ExamsModule } from './modules/exams/exams.module';
+
+@Module({
+  imports: [
+    AuthModule,
+    CourseModule,
+    LecturersModule,
+    StudentsModule,
+    ExamsModule,
+>>>>>>> 01baa886891db1263d9ee5b1ee826fbf9abdf4b9
   ],
 })
 export class AppModule {}

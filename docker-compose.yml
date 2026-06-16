@@ -1,16 +1,25 @@
-version: '3.8'
-
 services:
-  dev-db:
-    image: postgres:13
+  timely-db:
+    image: postgres:16
     ports:
-      - "5434:5432"
+      - '5434:5432'
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123
       POSTGRES_DB: nest
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d nest']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
-      - freecodecamp
+      - timely-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
 
 networks:
-  freecodecamp:
+  timely-network:
+
+volumes:
+  postgres-data:
