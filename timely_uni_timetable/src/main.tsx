@@ -6,12 +6,15 @@ import routes from './router/routes.tsx'
 import { Toaster } from 'react-hot-toast'
 import { Provider } from 'react-redux'
 import { appStore } from './store/appStore.ts'
+import AppProvider from './context/AppContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Provider store={appStore}>
-      <Toaster position="top-right" reverseOrder={false} />
-      <RouterProvider router={routes} />
-    </Provider>
+    <AppProvider>
+      <Provider store={appStore}>
+        <Toaster position="top-right" reverseOrder={false} />
+        <RouterProvider router={routes} />
+      </Provider>
+    </AppProvider>
   </StrictMode>,
 )

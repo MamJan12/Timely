@@ -1,86 +1,191 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useRef, useEffect, useState, useCallback, useContext } from "react";
 import {
     LayoutDashboard,
     CalendarDays,
     BookOpen,
-    Users,
-    UserCog,
     GraduationCap,
+    Users,
     MessageSquareWarning,
     Settings,
     ChevronLeft,
     ChevronRight,
+    LogOut,
 } from "lucide-react";
+import { AppContext } from "../../context/AppContext";
 
+// ── Nav config per role ───────────────────────────────────────────────────────
 
-// ── Nav items ─────────────────────────────────────────────────────────────────
-
-const NAV_ITEMS = [
-    {
-        section: "Overview",
-        links: [
-            { label: "Dashboard",   path: "/admin/dashboard",   icon: LayoutDashboard },
-            { label: "Schedule",    path: "/admin/schedule",    icon: CalendarDays },
+const NAV_CONFIG = {
+    admin: {
+        portalLabel: "Admin Portal",
+        sections: [
+            {
+                section: "Overview",
+                links: [
+                    { label: "Dashboard",  path: "/admin/dashboard",  icon: LayoutDashboard     },
+                    { label: "Schedule",   path: "/admin/schedule",   icon: CalendarDays        },
+                ],
+            },
+            {
+                section: "Management",
+                links: [
+                    { label: "Courses",    path: "/admin/courses",    icon: BookOpen            },
+                    { label: "Lecturers",  path: "/admin/lecturers",  icon: GraduationCap       },
+                    { label: "Students",   path: "/admin/students",   icon: Users               },
+                ],
+            },
+            {
+                section: "Activity",
+                links: [
+                    { label: "Complaints", path: "/admin/complaints", icon: MessageSquareWarning },
+                    { label: "Settings",   path: "/admin/settings",   icon: Settings            },
+                ],
+            },
         ],
     },
-    {
-        section: "Management",
-        links: [
-            { label: "Courses",     path: "/admin/courses",     icon: BookOpen },
-            { label: "Lecturers",   path: "/admin/lecturers",   icon: GraduationCap },
-            { label: "Students",    path: "/admin/students",    icon: Users },
-            { label: "Admin Users", path: "/admin/admin-users", icon: UserCog },
+
+    lecturer: {
+        portalLabel: "Lecturer Portal",
+        sections: [
+            {
+                section: "My Portal",
+                links: [
+                    { label: "My Timetable", path: "/lecturer/timetable",  icon: CalendarDays         },
+                    { label: "Complaints",   path: "/lecturer/complaints",  icon: MessageSquareWarning },
+                ],
+            },
         ],
     },
-    {
-        section: "Activity",
-        links: [
-            { label: "Feedback",    path: "/admin/feedback",    icon: MessageSquareWarning },
-            { label: "Settings",    path: "/admin/settings",    icon: Settings },
+
+    student: {
+        portalLabel: "Student Portal",
+        sections: [
+            {
+                section: "My Portal",
+                links: [
+                    { label: "My Timetable", path: "/student/timetable",  icon: CalendarDays         },
+                    { label: "Complaints",   path: "/student/complaints",  icon: MessageSquareWarning },
+                ],
+            },
         ],
     },
-];
+};
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const MIN_WIDTH  = 72;
+const MAX_WIDTH  = 400;
+const SNAP_WIDTH = 120;
+const DEFAULT_WIDTH = 300;
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface SidebarProps {
     collapsed: boolean;
     setCollapsed: (v: boolean) => void;
+    onWidthChange?: (width: number) => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
-    const location = useLocation();
+const Sidebar = ({ collapsed, setCollapsed, onWidthChange }: SidebarProps) => {
+    const { user }   = useContext(AppContext);
+    const location   = useLocation();
+    const navigate   = useNavigate();
+
+    const role       = (user?.role ?? "admin") as keyof typeof NAV_CONFIG;
+    const config     = NAV_CONFIG[role] ?? NAV_CONFIG.admin;
+
+    const [width, setWidth] = useState(collapsed ? MIN_WIDTH : DEFAULT_WIDTH);
+    const isDragging        = useRef(false);
+    const startX            = useRef(0);
+    const startWidth        = useRef(0);
+    const sidebarRef        = useRef<HTMLElement>(null);
+
+    const updateWidth = useCallback((w: number) => {
+        setWidth(w);
+        onWidthChange?.(w);
+    }, [onWidthChange]);
+
+    // Sync width when collapsed prop changes via chevron
+    useEffect(() => {
+        updateWidth(collapsed ? MIN_WIDTH : DEFAULT_WIDTH);
+    }, [collapsed]);
+
+    // ── Drag logic ────────────────────────────────────────────────────────────
+
+    const onMouseDown = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        isDragging.current             = true;
+        startX.current                 = e.clientX;
+        startWidth.current             = sidebarRef.current?.offsetWidth ?? width;
+        document.body.style.cursor     = "col-resize";
+        document.body.style.userSelect = "none";
+    }, [width]);
+
+    useEffect(() => {
+        const onMouseMove = (e: MouseEvent) => {
+            if (!isDragging.current) return;
+            const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth.current + e.clientX - startX.current));
+            updateWidth(newWidth);
+            setCollapsed(newWidth < SNAP_WIDTH);
+        };
+        const onMouseUp = () => {
+            if (!isDragging.current) return;
+            isDragging.current             = false;
+            document.body.style.cursor     = "";
+            document.body.style.userSelect = "";
+        };
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup",   onMouseUp);
+        return () => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup",   onMouseUp);
+        };
+    }, [setCollapsed, updateWidth]);
+
+    const handleToggle = () => {
+        const next = !isCollapsed;
+        setCollapsed(next);
+        updateWidth(next ? MIN_WIDTH : DEFAULT_WIDTH);
+    };
+
+    const handleLogout = () => {
+        try { localStorage.removeItem("timely_auth"); } catch { /* ignore */ }
+        navigate("/login");
+    };
+
+    const isCollapsed = width < SNAP_WIDTH;
+
+    // ── Render ────────────────────────────────────────────────────────────────
 
     return (
         <aside
-            className={`
-                fixed top-0 left-0 h-screen z-50 flex flex-col
-                bg-[var(--gray-dark)] text-white
-                transition-all duration-300 ease-in-out
-                ${collapsed ? "w-20" : "w-80"}
-            `}
+            ref={sidebarRef}
+            style={{ width }}
+            className="fixed top-0 left-0 h-screen z-50 flex flex-col bg-[var(--gray-dark)] text-white transition-none select-none"
         >
-            {/* ── Logo + collapse toggle ── */}
-            <div className={`flex items-center border-b border-white/10 h-[73px] px-5 ${collapsed ? "justify-center" : "justify-between"}`}>
-                {!collapsed && (
-                    <div className="flex items-center gap-3">
+            {/* ── Logo + toggle ── */}
+            <div className={`flex items-center border-b border-white/10 h-[73px] px-4 ${isCollapsed ? "justify-center" : "justify-between"}`}>
+                {!isCollapsed && (
+                    <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-lg bg-[var(--primary-200)] flex items-center justify-center shrink-0">
                             <CalendarDays className="w-4 h-4 text-[var(--gray-dark)]" />
                         </div>
-                        <div className="leading-tight">
-                            <p className="text-sm font-bold tracking-wide text-white">TIMELY</p>
-                            <p className="text-[10px] text-[var(--primary-200)] font-medium tracking-widest uppercase">Admin Portal</p>
+                        <div className="leading-tight min-w-0">
+                            <p className="text-sm font-bold tracking-wide text-white truncate">TIMELY</p>
+                            <p className="text-[10px] text-[var(--primary-200)] font-medium tracking-widest uppercase truncate">
+                                {config.portalLabel}
+                            </p>
                         </div>
                     </div>
                 )}
-
                 <button
-                    onClick={() => setCollapsed(!collapsed)}
+                    onClick={handleToggle}
                     className="w-7 h-7 rounded-full bg-white/10 hover:bg-[var(--primary-200)] hover:text-[var(--gray-dark)] flex items-center justify-center transition-all duration-200 shrink-0"
                 >
-                    {collapsed
+                    {isCollapsed
                         ? <ChevronRight className="w-3.5 h-3.5" />
                         : <ChevronLeft  className="w-3.5 h-3.5" />
                     }
@@ -89,15 +194,13 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
 
             {/* ── Nav ── */}
             <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 scrollbar-none">
-                {NAV_ITEMS.map(({ section, links }) => (
+                {config.sections.map(({ section, links }) => (
                     <div key={section}>
-                        {/* Section label — hidden when collapsed */}
-                        {!collapsed && (
+                        {!isCollapsed && (
                             <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest px-3 mb-2">
                                 {section}
                             </p>
                         )}
-
                         <ul className="space-y-1">
                             {links.map(({ label, path, icon: Icon }) => {
                                 const isActive = location.pathname === path;
@@ -105,28 +208,29 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
                                     <li key={path}>
                                         <NavLink
                                             to={path}
-                                            title={collapsed ? label : undefined}
+                                            title={isCollapsed ? label : undefined}
                                             className={`
-                                                flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-                                                transition-all duration-200 group relative
+                                                flex items-center gap-3 px-3 py-2.5 rounded-xl
+                                                text-sm font-medium transition-all duration-200
+                                                group relative
                                                 ${isActive
                                                     ? "bg-[var(--primary-200)] text-[var(--gray-dark)]"
                                                     : "text-white/60 hover:text-white hover:bg-white/10"
                                                 }
-                                                ${collapsed ? "justify-center" : ""}
+                                                ${isCollapsed ? "justify-center" : ""}
                                             `}
                                         >
                                             <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[var(--gray-dark)]" : ""}`} />
 
-                                            {!collapsed && <span>{label}</span>}
+                                            {!isCollapsed && <span className="truncate">{label}</span>}
 
-                                            {/* Active indicator bar */}
-                                            {isActive && !collapsed && (
-                                                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--gray-dark)]" />
+                                            {/* Active dot */}
+                                            {isActive && !isCollapsed && (
+                                                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--gray-dark)] shrink-0" />
                                             )}
 
-                                            {/* Tooltip when collapsed */}
-                                            {collapsed && (
+                                            {/* Collapsed tooltip */}
+                                            {isCollapsed && (
                                                 <span className="
                                                     absolute left-full ml-3 px-2.5 py-1.5 rounded-lg
                                                     bg-[var(--gray-dark)] border border-white/10
@@ -147,23 +251,42 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
                 ))}
             </nav>
 
-            {/* ── Footer ── */}
-            <div className={`border-t border-white/10 px-4 py-4 ${collapsed ? "flex justify-center" : ""}`}>
-                {collapsed ? (
-                    <div className="w-8 h-8 rounded-full bg-[var(--primary-200)] flex items-center justify-center">
-                        <span className="text-xs font-bold text-[var(--gray-dark)]">A</span>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[var(--primary-200)] flex items-center justify-center shrink-0">
-                            <span className="text-xs font-bold text-[var(--gray-dark)]">A</span>
-                        </div>
-                        <div className="leading-tight overflow-hidden">
-                            <p className="text-sm font-semibold text-white truncate">Admin</p>
-                            <p className="text-[11px] text-white/40 truncate">admin@timely.com</p>
-                        </div>
-                    </div>
-                )}
+            {/* ── Logout ── */}
+            <div className={`border-t border-white/10 px-3 py-4 ${isCollapsed ? "flex justify-center" : ""}`}>
+                <button
+                    onClick={handleLogout}
+                    title={isCollapsed ? "Logout" : undefined}
+                    className={`
+                        group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl
+                        text-sm font-medium text-white/60
+                        hover:bg-red-500/20 hover:text-red-400
+                        transition-all duration-200
+                        ${isCollapsed ? "justify-center" : ""}
+                    `}
+                >
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    {!isCollapsed && <span>Logout</span>}
+                    {isCollapsed && (
+                        <span className="
+                            absolute left-full ml-3 px-2.5 py-1.5 rounded-lg
+                            bg-[var(--gray-dark)] border border-white/10
+                            text-white text-xs font-medium whitespace-nowrap
+                            opacity-0 pointer-events-none
+                            group-hover:opacity-100 transition-opacity duration-150
+                            shadow-lg z-50
+                        ">
+                            Logout
+                        </span>
+                    )}
+                </button>
+            </div>
+
+            {/* ── Drag handle (right edge) ── */}
+            <div
+                onMouseDown={onMouseDown}
+                className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize group z-60"
+            >
+                <div className="h-full w-full group-hover:bg-[var(--primary-200)]/40 transition-colors duration-150" />
             </div>
         </aside>
     );

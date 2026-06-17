@@ -1,59 +1,92 @@
-import ErrorPage from "../pages/ErrorPage";
-import AdminDashboard from "../pages/adminDashboard";
-import AppLayout from "../components/layouts/AppLayout";
-import { createBrowserRouter, redirect } from "react-router-dom";
-import { getUserRole } from "../utils/authRedirect";
+import { createBrowserRouter, redirect } from 'react-router-dom';
+import ErrorPage              from '../pages/ErrorPage';
+import LoginPage              from '../pages/auth/loginPage';
+import AdminDashboard         from '../pages/adminDashboard';
+import AdminComplaintPage     from '../pages/adminComplaintPage';
+import SchedulePage           from '../pages/SchedulePage';
+import GenTimetablePage       from '../pages/GenTimetablePage';
+import AppLayout              from '../components/layouts/AppLayout';
+import LecturerTimetablePage  from '../pages/lecturer/LecturerTimetablePage';
+import LecturerComplaintsPage from '../pages/lecturer/LecturerComplaintsPage';
+import StudentTimetablePage   from '../pages/student/StudentTimetablePage';
+import StudentComplaintsPage  from '../pages/student/StudentComplaintsPage';
+import LecturersPage          from '../pages/admin/LecturersPage';
+import StudentsPage           from '../pages/admin/StudentsPage';
+import CoursesPage            from '../pages/admin/CoursesPage';
+import SettingsPage           from '../pages/admin/SettingsPage';
+import { getUserRole }        from '../utils/authRedirect';
+import type { Role }          from '../lib/types';
 
 const roleLoader = () => {
   const role = getUserRole();
+  if (role === 'ADMIN')    return redirect('/admin/dashboard');
+  if (role === 'LECTURER') return redirect('/lecturer/timetable');
+  if (role === 'STUDENT')  return redirect('/student/timetable');
+  return redirect('/login');
+};
 
-  if (role === "admin")    return redirect("/admin/dashboard");
-  if (role === "lecturer") return redirect("/lecturer/dashboard");
-  if (role === "student")  return redirect("/student/dashboard");
-
-  // Not logged in
-  return redirect("/login");
+const requireRole = (...allowed: Role[]) => () => {
+  const role = getUserRole();
+  if (!role) return redirect('/login');
+  if (!allowed.includes(role)) return redirect('/login');
+  return null;
 };
 
 const routes = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     loader: roleLoader,
     errorElement: <ErrorPage />,
   },
-
-  // ── Admin ──────────────────────────────────────────────
   {
-    path: "/admin",
+    path: '/login',
+    element: <LoginPage />,
+    errorElement: <ErrorPage />,
+  },
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  {
+    path: '/admin',
     element: <AppLayout />,
     errorElement: <ErrorPage />,
+    loader: requireRole('ADMIN'),
     children: [
-      {
-        path: "dashboard",
-        element: <AdminDashboard />,
-      },
+      { path: 'dashboard',    element: <AdminDashboard />    },
+      { path: 'complaints',   element: <AdminComplaintPage /> },
+      { path: 'schedule',     element: <SchedulePage />      },
+      { path: 'schedule/:id', element: <GenTimetablePage />  },
+      { path: 'lecturers',    element: <LecturersPage />     },
+      { path: 'students',     element: <StudentsPage />      },
+      { path: 'courses',      element: <CoursesPage />       },
+      { path: 'settings',     element: <SettingsPage />      },
     ],
   },
 
-  // ── Lecturer — not built yet, hits ErrorPage ───────────
+  // ── Lecturer ──────────────────────────────────────────────────────────────
   {
-    path: "/lecturer/dashboard",
+    path: '/lecturer',
+    element: <AppLayout />,
     errorElement: <ErrorPage />,
-    loader: () => { throw new Error("Lecturer dashboard coming soon."); },
+    loader: requireRole('LECTURER'),
+    children: [
+      { path: 'timetable',  element: <LecturerTimetablePage />  },
+      { path: 'complaints', element: <LecturerComplaintsPage /> },
+    ],
   },
 
-  // ── Student — not built yet, hits ErrorPage ────────────
+  // ── Student ───────────────────────────────────────────────────────────────
   {
-    path: "/student/dashboard",
+    path: '/student',
+    element: <AppLayout />,
     errorElement: <ErrorPage />,
-    loader: () => { throw new Error("Student dashboard coming soon."); },
+    loader: requireRole('STUDENT'),
+    children: [
+      { path: 'timetable',  element: <StudentTimetablePage />  },
+      { path: 'complaints', element: <StudentComplaintsPage /> },
+    ],
   },
 
-  // ── Catch-all ──────────────────────────────────────────
-  {
-    path: "*",
-    element: <ErrorPage />,
-  },
+  { path: '*', element: <ErrorPage /> },
 ]);
 
 export default routes;

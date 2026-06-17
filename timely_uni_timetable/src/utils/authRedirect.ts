@@ -1,8 +1,14 @@
-// Simulated for now — replace with your actual auth logic (e.g. from Redux store or localStorage)
-export type UserRole = "admin" | "lecturer" | "student" | null;
+import type { Role } from '../lib/types';
 
-export const getUserRole = (): UserRole => {
-  // Later this will read from localStorage, a token, or Redux
-  // For now hardcode "admin" to test — change to "lecturer" or "student" to test the error page
-  return "admin";
+const AUTH_KEY = 'timely_auth';
+
+export const getUserRole = (): Role | null => {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return (parsed?.role as Role) ?? null;
+  } catch {
+    return null;
+  }
 };
