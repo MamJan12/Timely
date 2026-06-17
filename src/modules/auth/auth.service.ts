@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import {
   Injectable,
   NotFoundException,
@@ -82,13 +81,4 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
-=======
-import { Injectable } from '@nestjs/common';
-
-@Injectable({})
-export class AuthService {
-  signup() {}
-
-  signin() {}
->>>>>>> 01baa886891db1263d9ee5b1ee826fbf9abdf4b9
 }
