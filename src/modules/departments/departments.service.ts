@@ -20,7 +20,7 @@ export class DepartmentsService {
 
   async create(dto: CreateDepartmentDto) {
     try {
-      return await this.departmentsRepository.create(dto.name, dto.code);
+      return await this.departmentsRepository.create(dto);
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
         throw new ConflictException('Department name or code already exists');

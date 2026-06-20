@@ -3,8 +3,28 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+const SCHOOLS = [
+  { name: 'School of Engineering and Technology', abbreviation: 'SET' },
+  { name: 'School of Health Science',            abbreviation: 'HS'  },
+  { name: 'School of Management Science',        abbreviation: 'MGT' },
+  { name: 'School of Agriculture',               abbreviation: 'AGT' },
+  { name: 'School of Education',                 abbreviation: 'EDC' },
+];
+
 async function main() {
   console.log('Seeding database...');
+
+  // ── Schools ────────────────────────────────────────────────────────────────
+  for (const s of SCHOOLS) {
+    await prisma.school.upsert({
+      where: { abbreviation: s.abbreviation },
+      update: {},
+      create: s,
+    });
+  }
+  console.log(`Created ${SCHOOLS.length} schools`);
+
+  const setSchool = await prisma.school.findUnique({ where: { abbreviation: 'SET' } });
 
   // ── Admin ──────────────────────────────────────────────────────────────────
   const adminPassword = await bcrypt.hash('admin123', 10);
@@ -28,8 +48,13 @@ async function main() {
   // ── Demo Department ────────────────────────────────────────────────────────
   const dept = await prisma.department.upsert({
     where: { code: 'CS' },
-    update: {},
-    create: { name: 'Computer Science', code: 'CS' },
+    update: { schoolId: setSchool?.id },
+    create: {
+      name:        'Computer Science',
+      code:        'CS',
+      schoolId:    setSchool?.id,
+      programType: 'UNDERGRADUATE',
+    },
   });
   console.log(`Department: ${dept.name}`);
 

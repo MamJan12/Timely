@@ -11,6 +11,7 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SchoolsModule } from './modules/schools/schools.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { TimetableModule } from './modules/timetable/timetable.module';
 import { UsersModule } from './modules/users/users.module';
@@ -29,6 +30,7 @@ import { UsersModule } from './modules/users/users.module';
     TimetableModule,
     ComplaintsModule,
     NotificationsModule,
+    SchoolsModule,
     DashboardModule,
     SettingsModule,
   ],

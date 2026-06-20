@@ -44,6 +44,11 @@ enum ComplaintStatus {
   RESOLVED
 }
 
+enum ProgramType {
+  UNDERGRADUATE
+  POSTGRADUATE
+}
+
 enum NotificationType {
   COMPLAINT_SUBMITTED
   COMPLAINT_RESOLVED
@@ -111,13 +116,26 @@ model Student {
   notifications Notification[]
 }
 
-model Department {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  code      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model School {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  abbreviation String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
+  departments Department[]
+}
+
+model Department {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  code        String      @unique
+  schoolId    String?
+  programType ProgramType @default(UNDERGRADUATE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  school     School?      @relation(fields: [schoolId], references: [id])
   lecturers  Lecturer[]
   students   Student[]
   courses    Course[]
