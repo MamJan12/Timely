@@ -39,17 +39,17 @@ const Header = () => {
   };
 
   return (
-    <div className="flex items-center justify-between border-b border-[var(--primary-400)] px-8 py-6">
-      <h6 className="text-[var(--primary-400)]">{portalLabel}</h6>
-      <div className="flex items-center gap-3">
-        <UserCircle className="w-12 h-12 text-[var(--gray-400)]" />
-        <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between border-b border-[var(--primary-400)] px-6 py-3">
+      <h6 className="text-sm font-medium text-[var(--primary-400)]">{portalLabel}</h6>
+      <div className="flex items-center gap-2">
+        <UserCircle className="w-8 h-8 text-[var(--gray-400)]" />
+        <div className="flex items-center gap-3">
           <div className="flex flex-col">
-            <p className="text-[var(--gray-800)]">{displayName}</p>
-            <small className="text-[var(--primary-400)] -mt-0.5">{role ?? ''}</small>
+            <p className="text-sm text-[var(--gray-800)] leading-tight">{displayName}</p>
+            <small className="text-[10px] text-[var(--primary-400)]">{role ?? ''}</small>
           </div>
           <ActionMenu
-            trigger={<div className="border border-black rounded-sm"><ChevronDown /></div>}
+            trigger={<div className="border border-black rounded-sm"><ChevronDown className="w-4 h-4" /></div>}
             actions={[
               { label: 'Settings', onClick: () => navigate('/admin/settings') },
               { label: 'Logout',   onClick: handleLogout },

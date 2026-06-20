@@ -5,7 +5,7 @@ import {
     CalendarDays,
     BookOpen,
     GraduationCap,
-    Users,
+    Building2,
     MessageSquareWarning,
     Settings,
     ChevronLeft,
@@ -30,9 +30,9 @@ const NAV_CONFIG = {
             {
                 section: "Management",
                 links: [
-                    { label: "Courses",    path: "/admin/courses",    icon: BookOpen            },
-                    { label: "Lecturers",  path: "/admin/lecturers",  icon: GraduationCap       },
-                    { label: "Students",   path: "/admin/students",   icon: Users               },
+                    { label: "Courses",      path: "/admin/courses",      icon: BookOpen      },
+                    { label: "Lecturers",    path: "/admin/lecturers",    icon: GraduationCap },
+                    { label: "Departments",  path: "/admin/departments",  icon: Building2     },
                 ],
             },
             {

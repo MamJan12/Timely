@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Pencil, Trash2, X } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { Lecturer, Department } from '../../lib/types';
 import Button from '../../components/ui/Button';
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from '../../components/ui/Table';
+import DeleteConfirmModal from '../../components/ui/DeleteConfirmModal';
+import FAB from '../../components/ui/FAB';
+import DepartmentFilter from '../../components/ui/DepartmentFilter';
 import toast from 'react-hot-toast';
 import { formatDate } from '../../utils/dateFormatter';
 
@@ -17,8 +20,10 @@ const LecturersPage = () => {
   const [showForm,    setShowForm]    = useState(false);
   const [editing,     setEditing]     = useState<Lecturer | null>(null);
   const [form,        setForm]        = useState<FormState>(EMPTY);
-  const [saving,      setSaving]      = useState(false);
-  const [search,      setSearch]      = useState('');
+  const [saving,       setSaving]       = useState(false);
+  const [search,       setSearch]       = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Lecturer | null>(null);
+  const [deptFilter,   setDeptFilter]   = useState<string | null>(null);
 
   const load = async () => {
     const [l, d] = await Promise.all([
@@ -38,7 +43,7 @@ const LecturersPage = () => {
   };
   const closeForm = () => { setShowForm(false); setEditing(null); setForm(EMPTY); };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
     try {
@@ -59,34 +64,33 @@ const LecturersPage = () => {
     } finally { setSaving(false); }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this lecturer?')) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.delete(`/lecturers/${id}`);
-      setLecturers(prev => prev.filter(l => l.id !== id));
+      await api.delete(`/lecturers/${deleteTarget.id}`);
+      setLecturers(prev => prev.filter(l => l.id !== deleteTarget.id));
       toast.success('Lecturer deleted');
+      setDeleteTarget(null);
     } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to delete'); }
   };
 
   const filtered = lecturers.filter(l => {
+    const matchesDept = deptFilter === null || l.departmentId === deptFilter;
     const q = search.toLowerCase();
-    return !search || `${l.firstName} ${l.lastName}`.toLowerCase().includes(q) || l.staffId.toLowerCase().includes(q);
+    const matchesSearch = !search || `${l.firstName} ${l.lastName}`.toLowerCase().includes(q) || l.staffId.toLowerCase().includes(q);
+    return matchesDept && matchesSearch;
   });
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--gray-dark)]">Lecturers</h1>
-          <p className="text-xs text-[var(--gray-400)] mt-1">{lecturers.length} lecturer{lecturers.length !== 1 ? 's' : ''}</p>
-        </div>
-        <Button onClick={openCreate} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Add Lecturer
-        </Button>
+      <div className="mb-4">
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--gray-dark)]">Lecturers</h1>
+        <p className="text-xs text-[var(--gray-400)] mt-1">{lecturers.length} lecturer{lecturers.length !== 1 ? 's' : ''}</p>
       </div>
       <div className="h-px w-full bg-[var(--gray-200)] mb-5" />
 
-      <div className="flex justify-end mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <DepartmentFilter departments={departments} value={deptFilter} onChange={setDeptFilter} />
         <div className="relative">
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or staff ID…"
@@ -131,7 +135,7 @@ const LecturersPage = () => {
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <button onClick={() => openEdit(l)} className="p-1.5 rounded-lg hover:bg-[var(--gray-100)]"><Pencil className="w-3.5 h-3.5 text-[var(--gray-500)]" /></button>
-                    <button onClick={() => handleDelete(l.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 text-red-500" /></button>
+                    <button onClick={() => setDeleteTarget(l)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 text-red-500" /></button>
                   </div>
                 </TableCell>
               </tr>
@@ -139,6 +143,15 @@ const LecturersPage = () => {
           </TableBody>
         </Table>
       </div>
+
+      <FAB onClick={openCreate} title="Add Lecturer" />
+
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        itemName={deleteTarget ? `${deleteTarget.firstName} ${deleteTarget.lastName}` : ''}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">

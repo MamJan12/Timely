@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, X, ChevronRight, CalendarDays, GraduationCap, Layers, BookOpen, Trash2, AlertTriangle } from 'lucide-react';
 import { api } from '../lib/api';
 import type { Timetable, Department, Level, Semester } from '../lib/types';
+import LevelFilter from '../components/ui/LevelFilter';
 import toast from 'react-hot-toast';
 import { formatDate } from '../utils/dateFormatter';
 
@@ -66,6 +67,7 @@ const SchedulePage = () => {
   const [semester,     setSemester]     = useState<Semester | ''>('');
   const [academicYear, setAcademicYear] = useState('2024/2025');
   const [search,       setSearch]       = useState('');
+  const [levelFilter,  setLevelFilter]  = useState<Level | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Timetable | null>(null);
   const [deleting,     setDeleting]     = useState(false);
 
@@ -73,13 +75,13 @@ const SchedulePage = () => {
     setLoading(true);
     try {
       const [tt, depts] = await Promise.all([
-        api.get<Timetable[]>('/timetables'),
-        api.get<Department[]>('/departments'),
+        api.get<Timetable[]>('/timetables').catch(() => [] as Timetable[]),
+        api.get<Department[]>('/departments').catch(() => [] as Department[]),
       ]);
-      setTimetables(tt);
-      setDepartments(depts);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load');
+      setTimetables(tt ?? []);
+      setDepartments(depts ?? []);
+    } catch {
+      // silently fall back to empty state
     } finally {
       setLoading(false);
     }
@@ -122,30 +124,35 @@ const SchedulePage = () => {
   const selectedDept = departments.find(d => d.id === deptId);
 
   const filtered = timetables.filter(t => {
+    const matchesLevel  = levelFilter === null || t.level === levelFilter;
     const q = search.toLowerCase();
-    return !search || t.department.name.toLowerCase().includes(q) || t.level.toLowerCase().includes(q);
+    const matchesSearch = !search || t.department.name.toLowerCase().includes(q) || t.level.toLowerCase().includes(q);
+    return matchesLevel && matchesSearch;
   });
 
   return (
     <div>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--gray-dark)] leading-none">Schedule</h1>
-          <p className="text-xs text-[var(--gray-400)] mt-1">
-            {timetables.length} timetable{timetables.length !== 1 ? 's' : ''} generated
-          </p>
-        </div>
+      <div className="mb-3">
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--gray-dark)] leading-none">Schedule</h1>
+        <p className="text-xs text-[var(--gray-400)] mt-1">
+          {timetables.length} timetable{timetables.length !== 1 ? 's' : ''} generated
+        </p>
+      </div>
+
+      <div className="h-px w-full bg-[var(--gray-200)] mb-5" />
+
+      {/* ── New Timetable button ── */}
+      <div className="mb-4">
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--gray-dark)] text-white text-sm font-medium hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" /> New Timetable
         </button>
       </div>
 
-      <div className="h-px w-full bg-[var(--gray-200)] mb-5" />
-
-      {/* ── Search ── */}
-      <div className="flex items-center justify-end mb-6">
+      {/* ── Filters ── */}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <LevelFilter value={levelFilter} onChange={setLevelFilter} />
         <div className="relative">
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search timetables..."

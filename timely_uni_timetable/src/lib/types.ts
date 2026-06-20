@@ -7,6 +7,7 @@ export type Day              = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' |
 export type TimetableStatus  = 'DRAFT' | 'PUBLISHED';
 export type ComplaintStatus  = 'PENDING' | 'RESOLVED';
 export type NotificationType = 'COMPLAINT_SUBMITTED' | 'COMPLAINT_RESOLVED' | 'TIMETABLE_PUBLISHED' | 'TIMETABLE_UPDATED';
+export type ProgramType      = 'UNDERGRADUATE' | 'POSTGRADUATE';
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -25,13 +26,26 @@ export interface AuthUser {
   student?:  { id: string; firstName: string; lastName: string; studentId: string; departmentId: string; level: Level };
 }
 
+// ── School ───────────────────────────────────────────────────────────────────
+
+export interface School {
+  id: string;
+  name: string;
+  abbreviation: string;
+  createdAt: string;
+  _count?: { departments: number };
+}
+
 // ── Department ────────────────────────────────────────────────────────────────
 
 export interface Department {
   id: string;
   name: string;
   code: string;
+  schoolId: string | null;
+  programType: ProgramType;
   createdAt: string;
+  school?: { id: string; name: string; abbreviation: string } | null;
   _count?: { lecturers: number; students: number; courses: number };
 }
 

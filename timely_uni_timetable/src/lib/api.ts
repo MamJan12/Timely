@@ -74,17 +74,32 @@ async function request<T>(path: string, options: RequestInit = {}, retry = true)
     throw new ApiError('Session expired', 401, {});
   }
 
-  const json = await res.json();
+  // Read as text first — res.json() throws on empty body (e.g. 204 No Content)
+  const text = await res.text();
+
+  let json: Record<string, unknown> | null = null;
+  if (text.trim()) {
+    try {
+      json = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      // Non-JSON body (e.g. HTML error page from a down proxy)
+      if (!res.ok) throw new ApiError(`Server error (${res.status})`, res.status, {});
+      return undefined as unknown as T;
+    }
+  }
 
   if (!res.ok) {
-    const message = typeof json.message === 'string'
-      ? json.message
-      : Array.isArray(json.message)
-        ? (json.message as string[]).join(', ')
-        : 'An error occurred';
-    // Throw ApiError with the full body so callers can read conflicts, etc.
-    throw new ApiError(message, res.status, json as Record<string, unknown>);
+    const raw = json?.message;
+    const message = typeof raw === 'string'
+      ? raw
+      : Array.isArray(raw)
+        ? (raw as string[]).join(', ')
+        : `Server error (${res.status})`;
+    throw new ApiError(message, res.status, json ?? {});
   }
+
+  // 204 No Content or empty body — return undefined cast to T
+  if (!json) return undefined as unknown as T;
 
   // Success responses are wrapped: { statusCode, message, data }
   return (json as ApiResponse<T>).data;

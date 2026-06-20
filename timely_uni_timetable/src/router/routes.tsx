@@ -11,8 +11,8 @@ import LecturerComplaintsPage from '../pages/lecturer/LecturerComplaintsPage';
 import StudentTimetablePage   from '../pages/student/StudentTimetablePage';
 import StudentComplaintsPage  from '../pages/student/StudentComplaintsPage';
 import LecturersPage          from '../pages/admin/LecturersPage';
-import StudentsPage           from '../pages/admin/StudentsPage';
 import CoursesPage            from '../pages/admin/CoursesPage';
+import DepartmentsPage        from '../pages/admin/DepartmentsPage';
 import SettingsPage           from '../pages/admin/SettingsPage';
 import { getUserRole }        from '../utils/authRedirect';
 import type { Role }          from '../lib/types';
@@ -56,7 +56,7 @@ const routes = createBrowserRouter([
       { path: 'schedule',     element: <SchedulePage />      },
       { path: 'schedule/:id', element: <GenTimetablePage />  },
       { path: 'lecturers',    element: <LecturersPage />     },
-      { path: 'students',     element: <StudentsPage />      },
+      { path: 'departments',  element: <DepartmentsPage />   },
       { path: 'courses',      element: <CoursesPage />       },
       { path: 'settings',     element: <SettingsPage />      },
     ],
