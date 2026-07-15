@@ -15,6 +15,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ComplaintsService } from './complaints.service';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
+import { RespondComplaintDto } from './dto/respond-complaint.dto';
 
 @ApiTags('Complaints')
 @ApiBearerAuth()
@@ -28,7 +29,7 @@ export class ComplaintsController {
   @ApiQuery({ name: 'status', required: false, enum: ComplaintStatus })
   @ApiQuery({ name: 'role', required: false, enum: Role })
   @ApiQuery({ name: 'department', required: false })
-  @ApiQuery({ name: 'date', required: false, description: 'Filter from date (ISO string)' })
+  @ApiQuery({ name: 'date', required: false })
   findAll(
     @Query('status') status?: ComplaintStatus,
     @Query('role') role?: Role,
@@ -40,13 +41,12 @@ export class ComplaintsController {
 
   @Get('my')
   @Roles(Role.LECTURER, Role.STUDENT)
-  @ApiOperation({ summary: 'Get my submitted complaints' })
-  getMyComplaints(@CurrentUser() user: any) {
-    return this.complaintsService.getMyComplaints(
-      user.role,
-      user.lecturer?.id,
-      user.student?.id,
-    );
+  @ApiOperation({ summary: 'Get my submitted complaints (with admin responses)' })
+  getMyComplaints(
+    @CurrentUser('userId') userId: string,
+    @CurrentUser('role') role: Role,
+  ) {
+    return this.complaintsService.getMyComplaints(userId, role);
   }
 
   @Get(':id')
@@ -57,15 +57,31 @@ export class ComplaintsController {
 
   @Post()
   @Roles(Role.LECTURER, Role.STUDENT)
-  @ApiOperation({ summary: 'Submit a complaint' })
-  submit(@Body() dto: CreateComplaintDto, @CurrentUser() user: any) {
-    return this.complaintsService.submit(dto, user.role, user.lecturer?.id, user.student?.id);
+  @ApiOperation({ summary: 'Submit a complaint or time-change request' })
+  submit(
+    @Body() dto: CreateComplaintDto,
+    @CurrentUser('userId') userId: string,
+    @CurrentUser('role') role: Role,
+  ) {
+    return this.complaintsService.submit(dto, userId, role);
+  }
+
+  @Patch(':id/respond')
+  @Roles(Role.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send admin response and mark complaint resolved' })
+  respond(
+    @Param('id') id: string,
+    @Body() dto: RespondComplaintDto,
+    @CurrentUser('userId') adminId: string,
+  ) {
+    return this.complaintsService.respond(id, adminId, dto.adminResponse);
   }
 
   @Patch(':id/resolve')
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Mark complaint as resolved (Admin only)' })
+  @ApiOperation({ summary: 'Mark complaint resolved without a text response (Admin only)' })
   resolve(@Param('id') id: string, @CurrentUser('userId') adminId: string) {
     return this.complaintsService.resolve(id, adminId);
   }

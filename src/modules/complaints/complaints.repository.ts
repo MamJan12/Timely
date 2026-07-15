@@ -2,6 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { ComplaintStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
+const complaintSelect = {
+  id: true,
+  submitterRole: true,
+  description: true,
+  level: true,
+  status: true,
+  adminResponse: true,
+  requestedDay: true,
+  requestedStartTime: true,
+  requestedEndTime: true,
+  resolvedById: true,
+  resolvedAt: true,
+  createdAt: true,
+  course:    { select: { code: true, name: true } },
+  lecturer:  { select: { id: true, firstName: true, lastName: true } },
+  student:   { select: { id: true, firstName: true, lastName: true } },
+} as const;
+
 @Injectable()
 export class ComplaintsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -13,41 +31,13 @@ export class ComplaintsRepository {
         ...(filters.role && { submitterRole: filters.role }),
         ...(filters.date && { createdAt: { gte: new Date(filters.date) } }),
       },
-      select: {
-        id: true,
-        submitterRole: true,
-        description: true,
-        level: true,
-        status: true,
-        resolvedById: true,
-        resolvedAt: true,
-        createdAt: true,
-        course: { select: { code: true, name: true } },
-        lecturer: { select: { id: true, firstName: true, lastName: true } },
-        student: { select: { id: true, firstName: true, lastName: true } },
-      },
+      select: complaintSelect,
       orderBy: { createdAt: 'desc' },
     });
   }
 
   findById(id: string) {
-    return this.prisma.complaint.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        submitterRole: true,
-        description: true,
-        level: true,
-        status: true,
-        resolvedById: true,
-        resolvedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        course: { select: { code: true, name: true } },
-        lecturer: { select: { id: true, firstName: true, lastName: true } },
-        student: { select: { id: true, firstName: true, lastName: true } },
-      },
-    });
+    return this.prisma.complaint.findUnique({ where: { id }, select: complaintSelect });
   }
 
   findBySubmitter(lecturerId?: string, studentId?: string) {
@@ -57,15 +47,19 @@ export class ComplaintsRepository {
         ...(studentId && { studentId }),
       },
       select: {
-        id: true,
-        submitterRole: true,
-        description: true,
-        status: true,
-        createdAt: true,
-        course: { select: { code: true, name: true } },
+        ...complaintSelect,
+        updatedAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  findLecturerByUserId(userId: string) {
+    return this.prisma.lecturer.findUnique({ where: { userId }, select: { id: true } });
+  }
+
+  findStudentByUserId(userId: string) {
+    return this.prisma.student.findUnique({ where: { userId }, select: { id: true } });
   }
 
   create(data: {
@@ -75,10 +69,21 @@ export class ComplaintsRepository {
     level?: any;
     lecturerId?: string;
     studentId?: string;
+    requestedDay?: string;
+    requestedStartTime?: string;
+    requestedEndTime?: string;
   }) {
     return this.prisma.complaint.create({
       data,
       select: { id: true, submitterRole: true, description: true, status: true, createdAt: true },
+    });
+  }
+
+  respond(id: string, adminId: string, adminResponse: string) {
+    return this.prisma.complaint.update({
+      where: { id },
+      data: { adminResponse, resolvedById: adminId, status: 'RESOLVED', resolvedAt: new Date() },
+      select: { id: true, status: true, adminResponse: true, resolvedById: true, resolvedAt: true },
     });
   }
 

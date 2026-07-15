@@ -21,8 +21,8 @@ export class AuthRepository {
   }
 
   async findUserByStaffId(staffId: string) {
-    const lecturer = await this.prisma.lecturer.findUnique({
-      where: { staffId },
+    const lecturer = await this.prisma.lecturer.findFirst({
+      where: { staffId: { equals: staffId, mode: 'insensitive' } },
       select: { user: { select: userSelect } },
     });
     return lecturer?.user ?? null;

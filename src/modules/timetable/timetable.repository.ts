@@ -198,7 +198,7 @@ export class TimetableRepository {
             semester: true,
             academicYear: true,
             status: true,
-            department: { select: { name: true, code: true } },
+            department: { select: { id: true, name: true, code: true } },
           },
         },
       },

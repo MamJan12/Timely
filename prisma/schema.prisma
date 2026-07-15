@@ -206,18 +206,22 @@ model TimetableSlot {
 }
 
 model Complaint {
-  id           String          @id @default(cuid())
-  submitterRole Role
-  description  String
-  courseId     String?
-  level        Level?
-  status       ComplaintStatus @default(PENDING)
-  resolvedById String?
-  resolvedAt   DateTime?
-  lecturerId   String?
-  studentId    String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id                 String          @id @default(cuid())
+  submitterRole      Role
+  description        String
+  courseId           String?
+  level              Level?
+  status             ComplaintStatus @default(PENDING)
+  adminResponse      String?
+  requestedDay       String?
+  requestedStartTime String?
+  requestedEndTime   String?
+  resolvedById       String?
+  resolvedAt         DateTime?
+  lecturerId         String?
+  studentId          String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   course   Course?   @relation(fields: [courseId], references: [id])
   lecturer Lecturer? @relation(fields: [lecturerId], references: [id])

@@ -21,35 +21,54 @@ export class ComplaintsService {
     return complaint;
   }
 
-  getMyComplaints(role: Role, lecturerId?: string, studentId?: string) {
-    return this.complaintsRepository.findBySubmitter(
-      role === Role.LECTURER ? lecturerId : undefined,
-      role === Role.STUDENT ? studentId : undefined,
-    );
+  async getMyComplaints(userId: string, role: Role) {
+    if (role === Role.LECTURER) {
+      const lecturer = await this.complaintsRepository.findLecturerByUserId(userId);
+      if (!lecturer) return [];
+      return this.complaintsRepository.findBySubmitter(lecturer.id, undefined);
+    }
+    const student = await this.complaintsRepository.findStudentByUserId(userId);
+    if (!student) return [];
+    return this.complaintsRepository.findBySubmitter(undefined, student.id);
   }
 
-  async submit(dto: CreateComplaintDto, role: Role, lecturerId?: string, studentId?: string) {
+  async submit(dto: CreateComplaintDto, userId: string, role: Role) {
+    let lecturerId: string | undefined;
+    let studentId: string | undefined;
+
+    if (role === Role.LECTURER) {
+      const lecturer = await this.complaintsRepository.findLecturerByUserId(userId);
+      lecturerId = lecturer?.id;
+    } else if (role === Role.STUDENT) {
+      const student = await this.complaintsRepository.findStudentByUserId(userId);
+      studentId = student?.id;
+    }
+
     const complaint = await this.complaintsRepository.create({
       submitterRole: role,
-      description: dto.description,
-      courseId: dto.courseId,
-      level: dto.level,
-      lecturerId: role === Role.LECTURER ? lecturerId : undefined,
-      studentId: role === Role.STUDENT ? studentId : undefined,
+      description:        dto.description,
+      courseId:           dto.courseId,
+      level:              dto.level,
+      lecturerId,
+      studentId,
+      requestedDay:       dto.requestedDay,
+      requestedStartTime: dto.requestedStartTime,
+      requestedEndTime:   dto.requestedEndTime,
     });
 
-    // Notify admins — using a placeholder notification
-    await this.notificationsService.createForAdmin('COMPLAINT_SUBMITTED', `New complaint submitted by ${role.toLowerCase()}: ${dto.description.slice(0, 80)}`);
+    await this.notificationsService.createForAdmin(
+      'COMPLAINT_SUBMITTED',
+      `New ${role.toLowerCase()} complaint: ${dto.description.slice(0, 80)}`,
+    );
 
     return complaint;
   }
 
-  async resolve(id: string, adminId: string) {
+  async respond(id: string, adminId: string, adminResponse: string) {
     const complaint = await this.findOne(id);
-    const updated = await this.complaintsRepository.resolve(id, adminId);
+    const updated = await this.complaintsRepository.respond(id, adminId, adminResponse);
 
-    // Notify the submitter
-    const msg = `Your complaint (ID: ${id}) has been resolved.`;
+    const msg = `Response from admin: "${adminResponse}"`;
     if (complaint.lecturer) {
       await this.notificationsService.createForLecturer(complaint.lecturer.id, 'COMPLAINT_RESOLVED', msg);
     } else if (complaint.student) {
@@ -57,5 +76,10 @@ export class ComplaintsService {
     }
 
     return updated;
+  }
+
+  async resolve(id: string, adminId: string) {
+    await this.findOne(id);
+    return this.complaintsRepository.resolve(id, adminId);
   }
 }
