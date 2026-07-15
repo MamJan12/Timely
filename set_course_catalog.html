@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SET Course Catalog — BUIB 2025/2026</title>
+<style>
+:root {
+  --bg: #F2F1ED;
+  --surface: #FFFFFF;
+  --border: #DEDAD2;
+  --text: #1A1916;
+  --muted: #7A7568;
+  --accent: #14305A;
+  --accent-fg: #FFFFFF;
+  --accent-soft: #E8EDF5;
+  --row-hover: #F8F7F3;
+  --shared-bg: #FDF3E0;
+  --shared-fg: #7C4F10;
+  --universal-bg: #E8F4ED;
+  --universal-fg: #1B5E35;
+  --warn-bg: #FFF3CD;
+  --warn-fg: #7A5200;
+
+  --c-ceb: #1D50C8; --c-ceb-soft: #EBF0FC;
+  --c-ctb: #6822C8; --c-ctb-soft: #F1EBFC;
+  --c-eeb: #B45000; --c-eeb-soft: #FDF0E5;
+  --c-etb: #C23800; --c-etb-soft: #FDF0EB;
+  --c-meb: #166534; --c-meb-soft: #E8F5ED;
+  --c-mtb: #0A6E7A; --c-mtb-soft: #E5F4F6;
+  --c-cib: #B91C1C; --c-cib-soft: #FDECEC;
+  --c-bcb: #854D0E; --c-bcb-soft: #FDF3E0;
+  --c-pwb: #334155; --c-pwb-soft: #EEF0F3;
+  --c-upb: #9D174D; --c-upb-soft: #FDEDF4;
+  --c-gen: #4B5563; --c-gen-soft: #F0F1F3;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181A; --surface: #222426; --border: #383B3E;
+    --text: #EDE9E3; --muted: #8A8680; --accent: #5E90D4;
+    --accent-fg: #FFFFFF; --accent-soft: #1B2B40;
+    --row-hover: #2A2C2E; --shared-bg: #2D2410; --shared-fg: #E8A84A;
+    --universal-bg: #0F2218; --universal-fg: #5CB97E;
+    --warn-bg: #2A2000; --warn-fg: #E8B84A;
+    --c-ceb: #6A9BF0; --c-ceb-soft: #1A2540;
+    --c-ctb: #B07EF5; --c-ctb-soft: #25154A;
+    --c-eeb: #E89A4A; --c-eeb-soft: #2A1C08;
+    --c-etb: #F08060; --c-etb-soft: #2A1308;
+    --c-meb: #4DC880; --c-meb-soft: #0D2518;
+    --c-mtb: #3ABFCC; --c-mtb-soft: #0A2225;
+    --c-cib: #F07070; --c-cib-soft: #2A1010;
+    --c-bcb: #D4924A; --c-bcb-soft: #25180A;
+    --c-pwb: #8BA0B8; --c-pwb-soft: #1A2030;
+    --c-upb: #E06090; --c-upb-soft: #2A0E1E;
+    --c-gen: #9AA0AC; --c-gen-soft: #222428;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F2F1ED; --surface: #FFFFFF; --border: #DEDAD2;
+  --text: #1A1916; --muted: #7A7568; --accent: #14305A;
+  --accent-fg: #FFFFFF; --accent-soft: #E8EDF5;
+  --row-hover: #F8F7F3; --shared-bg: #FDF3E0; --shared-fg: #7C4F10;
+  --universal-bg: #E8F4ED; --universal-fg: #1B5E35;
+  --warn-bg: #FFF3CD; --warn-fg: #7A5200;
+  --c-ceb: #1D50C8; --c-ceb-soft: #EBF0FC;
+  --c-ctb: #6822C8; --c-ctb-soft: #F1EBFC;
+  --c-eeb: #B45000; --c-eeb-soft: #FDF0E5;
+  --c-etb: #C23800; --c-etb-soft: #FDF0EB;
+  --c-meb: #166534; --c-meb-soft: #E8F5ED;
+  --c-mtb: #0A6E7A; --c-mtb-soft: #E5F4F6;
+  --c-cib: #B91C1C; --c-cib-soft: #FDECEC;
+  --c-bcb: #854D0E; --c-bcb-soft: #FDF3E0;
+  --c-pwb: #334155; --c-pwb-soft: #EEF0F3;
+  --c-upb: #9D174D; --c-upb-soft: #FDEDF4;
+  --c-gen: #4B5563; --c-gen-soft: #F0F1F3;
+}
+:root[data-theme="dark"] {
+  --bg: #17181A; --surface: #222426; --border: #383B3E;
+  --text: #EDE9E3; --muted: #8A8680; --accent: #5E90D4;
+  --accent-fg: #FFFFFF; --accent-soft: #1B2B40;
+  --row-hover: #2A2C2E; --shared-bg: #2D2410; --shared-fg: #E8A84A;
+  --universal-bg: #0F2218; --universal-fg: #5CB97E;
+  --warn-bg: #2A2000; --warn-fg: #E8B84A;
+  --c-ceb: #6A9BF0; --c-ceb-soft: #1A2540;
+  --c-ctb: #B07EF5; --c-ctb-soft: #25154A;
+  --c-eeb: #E89A4A; --c-eeb-soft: #2A1C08;
+  --c-etb: #F08060; --c-etb-soft: #2A1308;
+  --c-meb: #4DC880; --c-meb-soft: #0D2518;
+  --c-mtb: #3ABFCC; --c-mtb-soft: #0A2225;
+  --c-cib: #F07070; --c-cib-soft: #2A1010;
+  --c-bcb: #D4924A; --c-bcb-soft: #25180A;
+  --c-pwb: #8BA0B8; --c-pwb-soft: #1A2030;
+  --c-upb: #E06090; --c-upb-soft: #2A0E1E;
+  --c-gen: #9AA0AC; --c-gen-soft: #222428;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── Layout ── */
+.page { max-width: 1280px; margin: 0 auto; padding: 32px 24px 64px; }
+
+/* ── Header ── */
+.site-header { margin-bottom: 28px; }
+.header-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.header-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 26px;
+  font-weight: normal;
+  color: var(--accent);
+  text-wrap: balance;
+  margin-bottom: 4px;
+}
+.header-sub { font-size: 12px; color: var(--muted); }
+
+/* ── Stats ── */
+.stats-bar {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.stat-item {
+  flex: 1 1 120px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.stat-item:first-child { border-radius: 4px 0 0 4px; }
+.stat-item:last-child { border-radius: 0 4px 4px 0; }
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+
+/* ── Controls ── */
+.controls {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.controls-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  min-width: 32px;
+}
+.pill-group { display: flex; gap: 4px; flex-wrap: wrap; }
+.pill {
+  padding: 3px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: border-color 0.1s, background 0.1s, color 0.1s;
+}
+.pill:hover { border-color: var(--accent); color: var(--accent); }
+.pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+.pill-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.search-wrap { margin-left: auto; }
+.search-wrap input {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  width: 220px;
+  outline: none;
+  font-family: inherit;
+}
+.search-wrap input:focus { border-color: var(--accent); }
+.search-wrap input::placeholder { color: var(--muted); }
+
+/* ── Table meta ── */
+.table-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.warn-note {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 32px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+thead tr {
+  background: var(--accent);
+  color: var(--accent-fg);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+th.num { text-align: right; }
+td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--row-hover); }
+tbody tr { border-left: 3px solid transparent; }
+
+/* Dept color left-border by data attribute */
+tbody tr[data-dept="CEB"] { border-left-color: var(--c-ceb); }
+tbody tr[data-dept="CTB"] { border-left-color: var(--c-ctb); }
+tbody tr[data-dept="EEB"] { border-left-color: var(--c-eeb); }
+tbody tr[data-dept="ETB"] { border-left-color: var(--c-etb); }
+tbody tr[data-dept="MEB"] { border-left-color: var(--c-meb); }
+tbody tr[data-dept="MTB"] { border-left-color: var(--c-mtb); }
+tbody tr[data-dept="CIB"] { border-left-color: var(--c-cib); }
+tbody tr[data-dept="BCB"] { border-left-color: var(--c-bcb); }
+tbody tr[data-dept="PWB"] { border-left-color: var(--c-pwb); }
+tbody tr[data-dept="UPB"] { border-left-color: var(--c-upb); }
+tbody tr[data-dept="GEN"] { border-left-color: var(--c-gen); }
+
+/* Course code */
+.code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.course-name { max-width: 340px; }
+.unconfirmed { color: var(--muted); font-style: italic; }
+
+/* Dept chip */
+.dept-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Level pill */
+.level-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* Type badge */
+.type-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.type-shared  { background: var(--shared-bg);    color: var(--shared-fg); }
+.type-universal{ background: var(--universal-bg); color: var(--universal-fg); }
+.type-specific { display: none; }
+
+/* Shared-with codes */
+.shared-codes { display: flex; gap: 3px; flex-wrap: wrap; }
+.shared-code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+/* Empty state */
+.empty-row td {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ── Recommendations ── */
+.recommendations {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 24px;
+}
+.recommendations h2 {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.rec-list { display: flex; flex-direction: column; gap: 0; }
+.rec-item {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+}
+.rec-item:last-child { border-bottom: none; }
+.rec-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding-top: 1px;
+}
+.rec-body { font-size: 12.5px; line-height: 1.55; }
+.rec-body strong { color: var(--text); font-weight: 600; }
+.rec-body code {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 11px;
+  background: var(--bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent);
+}
+
+/* Legend row below table */
+.legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  font-size: 11px;
+  color: var(--muted);
+  align-items: center;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="site-header">
+  <div class="header-eyebrow">Biaka University Institute of Buea · BUIB</div>
+  <h1 class="header-title">School of Engineering &amp; Technology — Course Catalog</h1>
+  <p class="header-sub">Academic Year 2025/2026 &nbsp;·&nbsp; Extracted from 5 timetable PDFs &nbsp;·&nbsp; Covers L200, L300, L400 across 10 departments</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-item">
+    <span class="stat-value" id="stat-total">200</span>
+    <span class="stat-label">Total Courses</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value">10</span>
+    <span class="stat-label">Departments</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value">21</span>
+    <span class="stat-label">Shared Groups</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value" id="stat-visible">200</span>
+    <span class="stat-label">Showing</span>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="controls-row">
+    <span class="controls-label">Dept</span>
+    <div class="pill-group" id="dept-pills"></div>
+  </div>
+  <div class="controls-row">
+    <span class="controls-label">Level</span>
+    <div class="pill-group" id="level-pills"></div>
+    <span class="controls-label" style="margin-left:8px">Sem</span>
+    <div class="pill-group" id="sem-pills"></div>
+    <span class="controls-label" style="margin-left:8px">Type</span>
+    <div class="pill-group" id="type-pills"></div>
+    <div class="search-wrap">
+      <input type="search" id="search" placeholder="Search code or name…" aria-label="Search courses">
+    </div>
+  </div>
+</div>
+
+<div class="table-meta">
+  <span id="match-count">Showing all 200 courses</span>
+  <span class="warn-note">⚠ Credit values are estimated — confirm from official BUIB syllabus</span>
+</div>
+
+<div class="table-wrap">
+  <table id="course-table" role="grid">
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Course Name</th>
+        <th>Dept</th>
+        <th>Level</th>
+        <th>Sem</th>
+        <th>Type</th>
+        <th>Shared With</th>
+        <th class="num">Cr.</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<div class="legend">
+  <span style="font-weight:600;color:var(--text)">Legend:</span>
+  <span class="legend-item"><span class="type-badge type-shared">SHARED</span> taught across 2+ departments simultaneously</span>
+  <span class="legend-item"><span class="type-badge type-universal">UNIVERSAL</span> all SET departments</span>
+  <span class="legend-item"><span style="font-style:italic;color:var(--muted)">Italic name</span> = course name unconfirmed from PDFs</span>
+</div>
+
+<section class="recommendations">
+  <h2>Recommendations</h2>
+  <div class="rec-list">
+    <div class="rec-item"><span class="rec-num">1</span><div class="rec-body"><strong>Confirm credit values from the official syllabus.</strong> All credits in this catalog are estimated at 3 cr. for technical courses, 2 cr. for language/civic courses, and 1 cr. for Sports, based on the standard LMD convention. BUIB may allocate differently — obtain the official course catalog from the registrar before seeding production data.</div></div>
+    <div class="rec-item"><span class="rec-num">2</span><div class="rec-body"><strong>Confirm 8 unidentified course names.</strong> <code>BCB201</code>, <code>BCB203</code>, <code>BCB205</code>, <code>PWB201</code>, <code>UPB201</code>, <code>UPB203</code>, <code>CTB321</code>, and <code>CTB323</code> appear in the timetable grids but their full names are not listed in any of the 5 provided PDFs. Request individual department syllabuses for BCB, PWB, UPB, and the full CTB L300 description sheet.</div></div>
+    <div class="rec-item"><span class="rec-num">3</span><div class="rec-body"><strong>Verify CIB303 vs CIB313.</strong> Both are named "Construction Materials" — <code>CIB303</code> (L300, Sem 1) and <code>CIB313</code> (L300, Sem 2, from the 2nd-semester exam timetable). These may be sequential modules (Part I / Part II) with different content, or <code>CIB313</code> may be a misprint for <code>CIB303</code>. Clarify before seeding.</div></div>
+    <div class="rec-item"><span class="rec-num">4</span><div class="rec-body"><strong>ETB program appears incomplete.</strong> Only 6 ETB courses are identified (L200 Sem 1 + one L300 Sem 1 shared course). ETB is likely a full 3-year program; its L200 Sem 2, L300 Sem 2, and all L400 courses are absent from the provided PDFs. Request the ETB-specific timetable sheets.</div></div>
+    <div class="rec-item"><span class="rec-num">5</span><div class="rec-body"><strong>EEB L300 Sem 2 appears incomplete.</strong> Only one course (<code>EEB310</code>: Sequence Control) is identified for EEB in L300 Sem 2. An engineering L300 semester typically has 5–8 courses. The remaining EEB L300 Sem 2 courses are not in the provided PDFs.</div></div>
+    <div class="rec-item"><span class="rec-num">6</span><div class="rec-body"><strong>BCB, PWB, and UPB data is sparse.</strong> These three programs collectively have 19 courses vs. 95 for CEB+CTB alone. Their complete timetables — especially L300 Sem 1, all L400, and for UPB and PWB the bulk of their program — were not in the provided documents. A separate timetable document likely exists for these built-environment programs.</div></div>
+    <div class="rec-item"><span class="rec-num">7</span><div class="rec-body"><strong>Database seeding strategy for shared courses.</strong> Create <em>one</em> course record per unique course code — so <code>CEB205</code> and <code>CTB203</code> become two separate records (they have different codes, different departments), both with <code>isShared: true</code>. During timetable generation, the scheduler must treat these as the same physical class: same room, same time slot, same lecturer. Storing the partner code(s) in a <code>sharedCodes</code> or <code>notes</code> field lets the engine identify and enforce this constraint.</div></div>
+    <div class="rec-item"><span class="rec-num">8</span><div class="rec-body"><strong>L400 course volume is heavily skewed toward CEB/CTB.</strong> CEB has 27 L400 courses, CTB has 19, while EEB has 6 and MEB has 6. This could reflect deep specialisation tracks (CEB splits into Software and Networks tracks at L400 — courses 401–415 are software-track, 421–437 are networks-track), or it could mean L400 Sem 2 data for EEB and MEB is missing. Verify with respective HODs.</div></div>
+    <div class="rec-item"><span class="rec-num">9</span><div class="rec-body"><strong>CEB L400 has two visible specialisation tracks.</strong> Codes <code>CEB401–CEB418</code> are Software Engineering focused; <code>CEB421–CEB437</code> are Networks/Telecommunications focused. These may be elective tracks rather than courses all students take simultaneously — confirm whether students choose one track or attend both streams, as this affects room scheduling significantly.</div></div>
+    <div class="rec-item"><span class="rec-num">10</span><div class="rec-body"><strong>Seed order matters for foreign keys.</strong> When writing <code>seed.ts</code>, insert in this order: School → Department → Lecturer → Course → (timetable entries last). All course records need a valid <code>departmentId</code> before they can be inserted. Universal courses (FRE, ENG, SPT, CVE) should be assigned to a "General Education" department record, or assigned to each department separately if the schema requires one department per course.</div></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+const DEPT_META = {
+  GEN: { name:'General Education',            color:'var(--c-gen)',  soft:'var(--c-gen-soft)' },
+  CEB: { name:'Computer Engineering',         color:'var(--c-ceb)',  soft:'var(--c-ceb-soft)' },
+  CTB: { name:'Computer Technology (Telecom)',color:'var(--c-ctb)',  soft:'var(--c-ctb-soft)' },
+  EEB: { name:'Electrical Engineering',       color:'var(--c-eeb)',  soft:'var(--c-eeb-soft)' },
+  ETB: { name:'Electrical Technology',        color:'var(--c-etb)',  soft:'var(--c-etb-soft)' },
+  MEB: { name:'Mechanical Engineering',       color:'var(--c-meb)',  soft:'var(--c-meb-soft)' },
+  MTB: { name:'Mechanical Technology',        color:'var(--c-mtb)',  soft:'var(--c-mtb-soft)' },
+  CIB: { name:'Civil Engineering',            color:'var(--c-cib)',  soft:'var(--c-cib-soft)' },
+  BCB: { name:'Building &amp; Construction', color:'var(--c-bcb)',  soft:'var(--c-bcb-soft)' },
+  PWB: { name:'Public Works',                 color:'var(--c-pwb)',  soft:'var(--c-pwb-soft)' },
+  UPB: { name:'Urban Planning',               color:'var(--c-upb)',  soft:'var(--c-upb-soft)' },
+};
+
+// [code, name, dept, level, sem, type, sharedWith[], credits]
+// type: 's'=specific, 'sh'=shared, 'u'=universal
+const RAW = [
+// ── UNIVERSAL ──
+['FRE101','Functional French I','GEN','L200',1,'u',[],2],
+['FRE102','Functional French II','GEN','L200',2,'u',[],2],
+['ENG101','Use of English I','GEN','L200',1,'u',[],2],
+['ENG102','Use of English II','GEN','L200',2,'u',[],2],
+['SPT100','Sports','GEN','L200',1,'u',[],1],
+['CVE102','Civics and Ethics','GEN','L200',2,'u',[],2],
+// ── CEB ──
+['CEB201','Analysis','CEB','L200',1,'s',[],3],
+['CEB203','General Algebra','CEB','L200',1,'s',[],3],
+['CEB205','Introduction to Algorithms & Programming','CEB','L200',1,'sh',['CTB203'],3],
+['CEB207','Boolean Algebra and Logic Circuits','CEB','L200',1,'s',[],3],
+['CEB202','Java Programming','CEB','L200',2,'s',[],3],
+['CEB204','Computer Architecture','CEB','L200',2,'s',[],3],
+['CEB206','Discrete Mathematics','CEB','L200',2,'s',[],3],
+['CEB210','Linear Algebra','CEB','L200',2,'s',[],3],
+['CEB301','Probability and Statistics','CEB','L300',1,'sh',['CTB301'],3],
+['CEB303','Data Structures and Algorithms','CEB','L300',1,'sh',['CTB307'],3],
+['CEB305','Operating Systems','CEB','L300',1,'s',[],3],
+['CEB307','Computer Networks','CEB','L300',1,'s',[],3],
+['CEB309','Hardware and Software Maintenance','CEB','L300',1,'s',[],3],
+['CEB311','Operations Research','CEB','L300',1,'s',[],3],
+['CEB313','Object Oriented Programming (Java/C++)','CEB','L300',1,'s',[],3],
+['CEB315','Database Fundamentals and Design','CEB','L300',1,'s',[],3],
+['CEB302','Computer Security and Cryptosystems','CEB','L300',2,'s',[],3],
+['CEB304','Analysis and Design of Algorithms','CEB','L300',2,'s',[],3],
+['CEB306','Tools and Numerical Methods for Engineering','CEB','L300',2,'s',[],3],
+['CEB312','System Administration (Unix, Linux, Windows)','CEB','L300',2,'s',[],3],
+['CEB401','Software Engineering Process & Requirement Engineering','CEB','L400',1,'s',[],3],
+['CEB403','Object Oriented Modeling and UML','CEB','L400',1,'s',[],3],
+['CEB405','Database Practice','CEB','L400',1,'sh',['CTB411'],3],
+['CEB407','Software Engineering and Design','CEB','L400',1,'sh',['CTB405'],3],
+['CEB409','Advanced Operating Systems','CEB','L400',1,'s',[],3],
+['CEB411','Analysis and Design of Information Systems','CEB','L400',1,'s',[],3],
+['CEB413','Security of Information Systems & Cyber Security','CEB','L400',1,'sh',['CTB409'],3],
+['CEB415','Software Development Tools (IDE, Frameworks)','CEB','L400',1,'s',[],3],
+['CEB421','Switching and Routing Protocols I','CEB','L400',1,'s',[],3],
+['CEB423','Networks and Protocols','CEB','L400',1,'s',[],3],
+['CEB425','Data Communication and Computer Networks','CEB','L400',1,'s',[],3],
+['CEB427','Optical Network Communication','CEB','L400',1,'sh',['CTB419'],3],
+['CEB429','Mobile Networks and Wireless Communication','CEB','L400',1,'sh',['CTB415'],3],
+['CEB431','Network Security Fundamentals','CEB','L400',1,'s',[],3],
+['CEB433','Computer Network Laboratory II','CEB','L400',1,'s',[],2],
+['CEB435','Network Architectures and Dimensioning','CEB','L400',1,'s',[],3],
+['CEB437','Enterprise IP Telephony and Video Network','CEB','L400',1,'s',[],3],
+['CEB404','Data Warehouse and Data Mining','CEB','L400',2,'s',[],3],
+['CEB406','Cloud Computing and Big Data Analytics','CEB','L400',2,'s',[],3],
+['CEB408','XML and Document Content Description','CEB','L400',2,'s',[],3],
+['CEB410','Software Verification and Validation Techniques','CEB','L400',2,'s',[],3],
+['CEB414','Software Quality: Tools and Methods','CEB','L400',2,'s',[],3],
+['CEB416','Artificial Intelligence and Machine Learning','CEB','L400',2,'s',[],3],
+['CEB418','Human Computer Interface','CEB','L400',2,'s',[],3],
+['CEB422','Switching and Routing Protocols II','CEB','L400',2,'s',[],3],
+['CEB424','Storage Network Technologies and Security','CEB','L400',2,'s',[],3],
+['CEB434','Network Administration','CEB','L400',2,'s',[],3],
+// ── CTB ──
+['CTB201','Mathematics for Engineering (Algebra & Analysis)','CTB','L200',1,'s',[],3],
+['CTB203','Fundamentals of Computer Programming','CTB','L200',1,'sh',['CEB205'],3],
+['CTB205','Local Area Computer Networks','CTB','L200',1,'s',[],3],
+['CTB207','Information Systems and Concepts','CTB','L200',1,'s',[],3],
+['CTB209','Fundamentals of Database and Design','CTB','L200',1,'s',[],3],
+['CTB211','Switching and Routing','CTB','L200',1,'s',[],3],
+['CTB213','Signals and Systems','CTB','L200',1,'sh',['EEB205'],3],
+['CTB202','Discrete Structures','CTB','L200',2,'s',[],3],
+['CTB204','Computer Organisation and Architecture','CTB','L200',2,'s',[],3],
+['CTB208','Object Oriented Programming','CTB','L200',2,'s',[],3],
+['CTB212','Operating Systems','CTB','L200',2,'s',[],3],
+['CTB220','Basic Telecommunication','CTB','L200',2,'s',[],3],
+['CTB301','Probability and Statistics','CTB','L300',1,'sh',['CEB301'],3],
+['CTB303','Embedded Systems','CTB','L300',1,'sh',['EEB305'],3],
+['CTB305','Systems Engineering and Industry Practice','CTB','L300',1,'s',[],3],
+['CTB307','Data Structures and Algorithms','CTB','L300',1,'sh',['CEB303'],3],
+['CTB309','Dynamic Web Programming and JEE','CTB','L300',1,'s',[],3],
+['CTB311','Analysis and Design of Information Systems','CTB','L300',1,'s',[],3],
+['CTB313','Scripting Languages','CTB','L300',1,'s',[],3],
+['CTB315','Object Oriented Modelling and UML','CTB','L300',1,'s',[],3],
+['CTB317','Computer Graphics Design and Concepts','CTB','L300',1,'s',[],3],
+['CTB321','(Course name not confirmed from PDFs)','CTB','L300',1,'s',[],3],
+['CTB323','(Course name not confirmed from PDFs)','CTB','L300',1,'s',[],3],
+['CTB325','Digital Signal Processing','CTB','L300',1,'s',[],3],
+['CTB306','Mobile Application Development','CTB','L300',2,'s',[],3],
+['CTB308','Software Testing Methodologies','CTB','L300',2,'s',[],3],
+['CTB310','Analysis and Design of Algorithms','CTB','L300',2,'s',[],3],
+['CTB312','Software Process and Quality','CTB','L300',2,'s',[],3],
+['CTB314','Enterprise Systems and Architectures','CTB','L300',2,'s',[],3],
+['CTB401','System Administration (Linux, Unix, Windows)','CTB','L400',1,'s',[],3],
+['CTB403','Cloud Computing and Concepts','CTB','L400',1,'s',[],3],
+['CTB405','Software Construction and Evolution','CTB','L400',1,'sh',['CEB407'],3],
+['CTB407','Full Stack Web Development Technologies','CTB','L400',1,'s',[],3],
+['CTB409','Information Systems Security','CTB','L400',1,'sh',['CEB413'],3],
+['CTB411','Database Administration','CTB','L400',1,'sh',['CEB405'],3],
+['CTB413','Data Analysis and Machine Learning','CTB','L400',1,'s',[],3],
+['CTB415','Mobile Communications and Protocols','CTB','L400',1,'sh',['CEB429'],3],
+['CTB417','Analog and Digital Communication','CTB','L400',1,'s',[],3],
+['CTB419','Optical Network Communication','CTB','L400',1,'sh',['CEB427'],3],
+['CTB423','Digital Radio and TV','CTB','L400',1,'s',[],3],
+['CTB402','Fundamentals of Big Data Analytics','CTB','L400',2,'s',[],3],
+['CTB404','Data Warehouse and Data Mining','CTB','L400',2,'s',[],3],
+['CTB406','Artificial Intelligence and Expert Systems','CTB','L400',2,'s',[],3],
+['CTB408','Data Storage and Management Technologies','CTB','L400',2,'s',[],3],
+['CTB410','Human Computer Interface','CTB','L400',2,'s',[],3],
+['CTB412','Transmission Networks and Technologies','CTB','L400',2,'s',[],3],
+['CTB416','Telecommunication Network Management','CTB','L400',2,'s',[],3],
+['CTB420','Remote Sensing and Internet of Things','CTB','L400',2,'s',[],3],
+// ── EEB ──
+['EEB201','Circuit Analysis','EEB','L200',1,'sh',['ETB201'],3],
+['EEB203','Digital Electronics I','EEB','L200',1,'sh',['ETB205'],3],
+['EEB205','Signals and Systems','EEB','L200',1,'sh',['CTB213'],3],
+['EEB207','Fundamentals of Electrical Engineering','EEB','L200',1,'sh',['ETB207'],3],
+['EEB209','Physics for Engineering I','EEB','L200',1,'sh',['ETB209'],3],
+['EEB202','Analog Electronics I','EEB','L200',2,'s',[],3],
+['EEB204','Physics for Engineering II','EEB','L200',2,'s',[],3],
+['EEB206','Control Engineering and Instrumentation','EEB','L200',2,'s',[],3],
+['EEB208','Digital Electronics II','EEB','L200',2,'s',[],3],
+['EEB301','Measurement and Instrumentation','EEB','L300',1,'s',[],3],
+['EEB303','Analog Electronics II','EEB','L300',1,'s',[],3],
+['EEB305','Microcontrollers and Microprocessors','EEB','L300',1,'sh',['CTB303'],3],
+['EEB307','Technical Drawing and Introduction to CAD','EEB','L300',1,'s',[],3],
+['EEB309','Fundamentals of Electrical Machines','EEB','L300',1,'sh',['ETB303'],3],
+['EEB311','Introduction to Renewable Energy','EEB','L300',1,'s',[],3],
+['EEB310','Sequence Control','EEB','L300',2,'s',[],3],
+['EEB401','Electric Machines I','EEB','L400',1,'s',[],3],
+['EEB403','Power Electronics and Control','EEB','L400',1,'s',[],3],
+['EEB407','Feedback Systems','EEB','L400',1,'s',[],3],
+['EEB409','Electrical Power Systems Engineering I','EEB','L400',1,'s',[],3],
+['EEB413','Renewable Energy Components and Technologies','EEB','L400',1,'s',[],3],
+['EEB415','Electrical Transmission Lines','EEB','L400',1,'s',[],3],
+// ── ETB ──
+['ETB201','Circuit Analysis','ETB','L200',1,'sh',['EEB201'],3],
+['ETB203','Analog Electronics','ETB','L200',1,'s',[],3],
+['ETB205','Digital Electronics I','ETB','L200',1,'sh',['EEB203'],3],
+['ETB207','Fundamentals of Electrical Engineering','ETB','L200',1,'sh',['EEB207'],3],
+['ETB209','Physics for Engineering I','ETB','L200',1,'sh',['EEB209'],3],
+['ETB303','Fundamentals of Electrical Machines','ETB','L300',1,'sh',['EEB309'],3],
+// ── MEB ──
+['MEB201','Fundamentals of Mechanical Engineering','MEB','L200',1,'s',[],3],
+['MEB203','Mechanics I','MEB','L200',1,'sh',['MTB201'],3],
+['MEB205','Introduction to Engineering Drawing','MEB','L200',1,'sh',['MTB203','BCB207'],3],
+['MEB204','Mechanics II','MEB','L200',2,'s',[],3],
+['MEB206','Introduction to Thermodynamics','MEB','L200',2,'s',[],3],
+['MEB303','Electrical Engineering for Mechanical Eng. I','MEB','L300',1,'s',[],3],
+['MEB305','Thermodynamics','MEB','L300',1,'s',[],3],
+['MEB307','Mechanical Vibrations','MEB','L300',1,'s',[],3],
+['MEB309','Fluid Mechanics I','MEB','L300',1,'sh',['MTB309'],3],
+['MEB311','Mechanics of Machine Elements','MEB','L300',1,'sh',['MTB303'],3],
+['MEB304','Electrical Engineering for Mechanical Eng. II','MEB','L300',2,'s',[],3],
+['MEB308','Heat Transfer','MEB','L300',2,'s',[],3],
+['MEB310','Fluid Mechanics II','MEB','L300',2,'s',[],3],
+['MEB316','Machine Design I','MEB','L300',2,'s',[],3],
+['MEB322','Microcomputer Systems I','MEB','L300',2,'s',[],3],
+['MEB401','Hydraulics and Pneumatics Systems','MEB','L400',1,'s',[],3],
+['MEB403','Cutting and Abrasive Machining of Materials','MEB','L400',1,'s',[],3],
+['MEB405','Mechanics of Materials','MEB','L400',1,'s',[],3],
+['MEB407','Composite Materials','MEB','L400',1,'s',[],3],
+['MEB409','Principles of Plant Maintenance','MEB','L400',1,'s',[],3],
+['MEB413','Finite Element Analysis','MEB','L400',1,'s',[],3],
+// ── MTB ──
+['MTB201','Mechanics I','MTB','L200',1,'sh',['MEB203'],3],
+['MTB203','Engineering Graphics and CAD I','MTB','L200',1,'sh',['MEB205','BCB207'],3],
+['MTB301','Machine Drawing Laboratory','MTB','L300',1,'s',[],2],
+['MTB303','Mechanics of Machine Elements','MTB','L300',1,'sh',['MEB311'],3],
+['MTB305','Manufacturing Technology','MTB','L300',1,'s',[],3],
+['MTB307','Thermodynamics I','MTB','L300',1,'s',[],3],
+['MTB309','Fluid Mechanics I','MTB','L300',1,'sh',['MEB309'],3],
+['MTB302','Mechatronics Systems','MTB','L300',2,'s',[],3],
+['MTB304','Machine Element Design','MTB','L300',2,'s',[],3],
+['MTB306','Thermodynamics II','MTB','L300',2,'s',[],3],
+['MTB308','Fluid Mechanics II','MTB','L300',2,'s',[],3],
+// ── CIB ──
+['CIB201','Fundamentals of Civil Engineering','CIB','L200',1,'s',[],3],
+['CIB203','Chemistry for Engineering','CIB','L200',1,'s',[],3],
+['CIB202','Material Science and Technology','CIB','L200',2,'s',[],3],
+['CIB301','Affine and Euclidean Geometry','CIB','L300',1,'s',[],3],
+['CIB303','Construction Materials','CIB','L300',1,'s',[],3],
+['CIB305','Electrochemistry','CIB','L300',1,'s',[],3],
+['CIB307','Strength of Materials','CIB','L300',1,'sh',['BCB307'],3],
+['CIB309','Applied Geology and Hydrogeology','CIB','L300',1,'s',[],3],
+['CIB311','Basic Electrical Engineering','CIB','L300',1,'s',[],3],
+['CIB302','Hydraulics','CIB','L300',2,'s',[],3],
+['CIB306','Geometric and Wave Optics','CIB','L300',2,'s',[],3],
+['CIB310','Quality, Safety and Environmental Management','CIB','L300',2,'s',[],3],
+['CIB313','Construction Materials (Sem 2 — verify vs CIB303)','CIB','L300',2,'s',[],3],
+['CIB401','Introduction to Geomatics','CIB','L400',1,'s',[],3],
+['CIB403','Soil Mechanics (Geotechnics)','CIB','L400',1,'s',[],3],
+['CIB405','Foundations, Earthworks and Slope Stability','CIB','L400',1,'s',[],3],
+['CIB407','Hydrology and Water Resource Engineering','CIB','L400',1,'s',[],3],
+['CIB411','Acoustic and Thermal Comfort in Buildings','CIB','L400',1,'s',[],3],
+['CIB413','Design of Timber and Steel Structures','CIB','L400',1,'s',[],3],
+['CIB415','Reinforced Concrete I','CIB','L400',1,'s',[],3],
+// ── BCB ──
+['BCB201','(Course name to be confirmed)','BCB','L200',1,'s',[],3],
+['BCB203','(Course name to be confirmed)','BCB','L200',1,'sh',['UPB203'],3],
+['BCB205','(Course name to be confirmed)','BCB','L200',1,'s',[],3],
+['BCB207','Engineering Drawing / Graphics (BCB variant)','BCB','L200',1,'sh',['MEB205','MTB203'],3],
+['BCB307','Strength of Materials','BCB','L300',1,'sh',['CIB307'],3],
+['BCB304','Soil Mechanics','BCB','L300',2,'s',[],3],
+['BCB306','Concrete Technology','BCB','L300',2,'s',[],3],
+['BCB308','Structural Analysis','BCB','L300',2,'s',[],3],
+['BCB313','Building Construction Materials','BCB','L300',2,'s',[],3],
+['BCB401','Construction Technique','BCB','L400',1,'s',[],3],
+['BCB405','Applied Engineering Geology','BCB','L400',1,'s',[],3],
+['BCB407','Design and Planning of Urban & Regional Landscape','BCB','L400',1,'s',[],3],
+['BCB409','Design & Construction of Timber & Steel Structures','BCB','L400',1,'s',[],3],
+// ── PWB ──
+['PWB201','(Course name to be confirmed)','PWB','L200',1,'s',[],3],
+['PWB304','Traffic and Transport Planning II','PWB','L300',2,'s',[],3],
+['PWB310','Hydraulics','PWB','L300',2,'s',[],3],
+['PWB312','Foundation and Slope Stability','PWB','L300',2,'s',[],3],
+// ── UPB ──
+['UPB201','(Course name to be confirmed)','UPB','L200',1,'s',[],3],
+['UPB203','(Course name to be confirmed)','UPB','L200',1,'sh',['BCB203'],3],
+];
+
+const courses = RAW.map(([code,name,dept,level,sem,type,sharedWith,credits]) =>
+  ({code,name,dept,level,sem,type,sharedWith,credits}));
+
+// ── State ──
+let filterDept  = 'ALL';
+let filterLevel = 'ALL';
+let filterSem   = 'ALL';
+let filterType  = 'ALL';
+let filterSearch = '';
+
+// ── Dept pill colors for dept pills ──
+function deptColor(d) { return `var(--c-${d.toLowerCase()})`; }
+function deptSoft(d)  { return `var(--c-${d.toLowerCase()}-soft)`; }
+
+// ── Shared-code chip html ──
+function sharedChip(code) {
+  const d = code.replace(/\d+/,'');
+  return `<span class="shared-code" style="background:${deptSoft(d)};color:${deptColor(d)}">${code}</span>`;
+}
+
+// ── Dept chip html ──
+function deptChip(d) {
+  return `<span class="dept-chip" style="background:${deptSoft(d)};color:${deptColor(d)}">${d}</span>`;
+}
+
+// ── Build table ──
+function render() {
+  const q = filterSearch.toLowerCase();
+  const visible = courses.filter(c => {
+    if (filterDept !== 'ALL' && c.dept !== filterDept) return false;
+    if (filterLevel !== 'ALL' && c.level !== filterLevel) return false;
+    if (filterSem !== 'ALL' && String(c.sem) !== filterSem) return false;
+    if (filterType !== 'ALL') {
+      if (filterType === 'shared'    && c.type !== 'sh') return false;
+      if (filterType === 'specific'  && c.type !== 's')  return false;
+      if (filterType === 'universal' && c.type !== 'u')  return false;
+    }
+    if (q && !c.code.toLowerCase().includes(q) && !c.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('table-body');
+  if (visible.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No courses match the current filters.</td></tr>';
+  } else {
+    tbody.innerHTML = visible.map(c => {
+      const unconf = c.name.startsWith('(');
+      const nameHtml = unconf
+        ? `<span class="unconfirmed">${c.name}</span>`
+        : c.name;
+      const typeBadge = c.type === 'sh'
+        ? '<span class="type-badge type-shared">SHARED</span>'
+        : c.type === 'u'
+          ? '<span class="type-badge type-universal">UNIVERSAL</span>'
+          : '';
+      const sharedHtml = c.sharedWith.length
+        ? `<div class="shared-codes">${c.sharedWith.map(sharedChip).join('')}</div>`
+        : '<span style="color:var(--muted)">—</span>';
+      return `<tr data-dept="${c.dept}">
+        <td><span class="code">${c.code}</span></td>
+        <td class="course-name">${nameHtml}</td>
+        <td>${deptChip(c.dept)}</td>
+        <td><span class="level-pill">${c.level}</span></td>
+        <td style="color:var(--muted);font-variant-numeric:tabular-nums">S${c.sem}</td>
+        <td>${typeBadge}</td>
+        <td>${sharedHtml}</td>
+        <td class="num">${c.credits}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('stat-visible').textContent = visible.length;
+  document.getElementById('match-count').textContent =
+    visible.length === courses.length
+      ? `Showing all ${courses.length} courses`
+      : `Showing ${visible.length} of ${courses.length} courses`;
+}
+
+// ── Build filter pills ──
+function makePills(containerId, options, getValue, setValue) {
+  const container = document.getElementById(containerId);
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (getValue() === opt.value ? ' active' : '');
+    btn.setAttribute('aria-pressed', getValue() === opt.value ? 'true' : 'false');
+    if (opt.dot) {
+      btn.innerHTML = `<span class="pill-dot" style="background:${opt.dot}"></span>${opt.label}`;
+    } else {
+      btn.textContent = opt.label;
+    }
+    btn.addEventListener('click', () => {
+      setValue(opt.value);
+      container.querySelectorAll('.pill').forEach((p,i) => {
+        const active = options[i].value === getValue();
+        p.classList.toggle('active', active);
+        p.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      render();
+    });
+    container.appendChild(btn);
+  });
+}
+
+const deptOptions = [
+  { value:'ALL', label:'All' },
+  ...Object.entries(DEPT_META).map(([k,v]) => ({ value:k, label:k, dot:v.color }))
+];
+makePills('dept-pills',  deptOptions,
+  () => filterDept,  v => { filterDept = v; });
+
+makePills('level-pills', [
+  {value:'ALL',label:'All'},{value:'L200',label:'L200'},
+  {value:'L300',label:'L300'},{value:'L400',label:'L400'}
+], () => filterLevel, v => { filterLevel = v; });
+
+makePills('sem-pills', [
+  {value:'ALL',label:'All'},{value:'1',label:'Sem 1'},{value:'2',label:'Sem 2'}
+], () => filterSem, v => { filterSem = v; });
+
+makePills('type-pills', [
+  {value:'ALL',label:'All'},{value:'specific',label:'Specific'},
+  {value:'shared',label:'Shared'},{value:'universal',label:'Universal'}
+], () => filterType, v => { filterType = v; });
+
+document.getElementById('search').addEventListener('input', e => {
+  filterSearch = e.target.value;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

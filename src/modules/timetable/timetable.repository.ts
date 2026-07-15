@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Level, Semester, TimetableStatus } from '@prisma/client';
+import { Day, Level, Semester, TimetableStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const slotSelect = {
@@ -143,10 +143,18 @@ export class TimetableRepository {
     });
   }
 
-  // Student timetable view
-  findStudentTimetable(departmentId: string, level: Level, semester: Semester, academicYear: string) {
-    return this.prisma.timetable.findUnique({
-      where: { departmentId_level_semester_academicYear: { departmentId, level, semester, academicYear } },
+  findStudentByUserId(userId: string) {
+    return this.prisma.student.findUnique({
+      where: { userId },
+      select: { departmentId: true, level: true },
+    });
+  }
+
+  // Student timetable view — finds the most recent PUBLISHED timetable for the student's dept/level/semester
+  findStudentTimetable(departmentId: string, level: Level, semester: Semester) {
+    return this.prisma.timetable.findFirst({
+      where: { departmentId, level, semester, status: 'PUBLISHED' },
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         level: true,
@@ -155,30 +163,41 @@ export class TimetableRepository {
         status: true,
         department: { select: { name: true, code: true } },
         slots: {
-          select: { id: true, day: true, startTime: true, endTime: true, venue: true, course: { select: { code: true, name: true, credits: true } }, lecturer: { select: { firstName: true, lastName: true } } },
+          select: {
+            id: true,
+            day: true,
+            startTime: true,
+            endTime: true,
+            venue: true,
+            course: { select: { id: true, code: true, name: true, level: true } },
+            lecturer: { select: { id: true, firstName: true, lastName: true, staffId: true } },
+          },
           orderBy: [{ day: 'asc' }, { startTime: 'asc' }],
         },
       },
     });
   }
 
-  // Lecturer timetable view
-  findLecturerTimetable(lecturerId: string) {
+  // Lecturer timetable view — all slots assigned to this lecturer across all timetables
+  findLecturerTimetable(userId: string) {
     return this.prisma.timetableSlot.findMany({
-      where: { lecturerId },
+      where: {
+        lecturer: { userId },
+      },
       select: {
         id: true,
         day: true,
         startTime: true,
         endTime: true,
         venue: true,
-        course: { select: { code: true, name: true } },
+        course: { select: { id: true, code: true, name: true, level: true } },
         timetable: {
           select: {
             id: true,
             level: true,
             semester: true,
             academicYear: true,
+            status: true,
             department: { select: { name: true, code: true } },
           },
         },
@@ -200,5 +219,23 @@ export class TimetableRepository {
         lecturers: { select: { lecturerId: true } },
       },
     });
+  }
+
+  findAllLecturerIds() {
+    return this.prisma.lecturer.findMany({ select: { id: true } });
+  }
+
+  bulkCreateSlots(
+    timetableId: string,
+    slots: Array<{ courseId: string; lecturerId: string; day: Day; startTime: string; endTime: string }>,
+  ) {
+    return this.prisma.$transaction(
+      slots.map(slot =>
+        this.prisma.timetableSlot.create({
+          data: { timetableId, ...slot },
+          select: { id: true, day: true, startTime: true, endTime: true, courseId: true, lecturerId: true },
+        }),
+      ),
+    );
   }
 }

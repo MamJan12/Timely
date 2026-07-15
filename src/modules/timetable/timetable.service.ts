@@ -125,14 +125,18 @@ export class TimetableService {
   }
 
   // Timetable views
-  async getStudentTimetable(departmentId: string, level: Level, semester: Semester, academicYear: string) {
-    const timetable = await this.timetableRepository.findStudentTimetable(departmentId, level, semester, academicYear);
+  async getStudentTimetable(userId: string, semester: Semester) {
+    const student = await this.timetableRepository.findStudentByUserId(userId);
+    if (!student) throw new NotFoundException('Student record not found');
+    const timetable = await this.timetableRepository.findStudentTimetable(
+      student.departmentId, student.level, semester,
+    );
     if (!timetable) throw new NotFoundException('No published timetable found for your department and level');
     return timetable;
   }
 
-  getLecturerTimetable(lecturerId: string) {
-    return this.timetableRepository.findLecturerTimetable(lecturerId);
+  getLecturerTimetable(userId: string) {
+    return this.timetableRepository.findLecturerTimetable(userId);
   }
 
   // Auto-generation
@@ -141,6 +145,6 @@ export class TimetableService {
     if (timetable.status === TimetableStatus.PUBLISHED) {
       throw new ForbiddenException('Cannot regenerate a published timetable');
     }
-    return this.generationService.generate(timetableId, timetable.department.id, timetable.level);
+    return this.generationService.generate(timetableId, timetable.department.id, timetable.level, timetable.semester);
   }
 }

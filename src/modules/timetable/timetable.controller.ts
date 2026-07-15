@@ -45,27 +45,20 @@ export class TimetableController {
 
   @Get('my/student')
   @Roles(Role.STUDENT)
-  @ApiOperation({ summary: 'Get timetable for the current student' })
+  @ApiOperation({ summary: 'Get published timetable for the current student' })
   @ApiQuery({ name: 'semester', required: true, enum: Semester })
-  @ApiQuery({ name: 'academicYear', required: true })
   getStudentTimetable(
-    @CurrentUser() user: any,
+    @CurrentUser('userId') userId: string,
     @Query('semester') semester: Semester,
-    @Query('academicYear') academicYear: string,
   ) {
-    return this.timetableService.getStudentTimetable(
-      user.student?.departmentId,
-      user.student?.level,
-      semester,
-      academicYear,
-    );
+    return this.timetableService.getStudentTimetable(userId, semester);
   }
 
   @Get('my/lecturer')
   @Roles(Role.LECTURER)
-  @ApiOperation({ summary: 'Get all slots assigned to the current lecturer' })
-  getLecturerTimetable(@CurrentUser() user: any) {
-    return this.timetableService.getLecturerTimetable(user.lecturer?.id);
+  @ApiOperation({ summary: 'Get all published slots assigned to the current lecturer' })
+  getLecturerTimetable(@CurrentUser('userId') userId: string) {
+    return this.timetableService.getLecturerTimetable(userId);
   }
 
   @Get(':id')

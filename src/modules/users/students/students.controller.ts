@@ -35,6 +35,18 @@ export class StudentsController {
     return this.studentsService.findAll(departmentId, level);
   }
 
+  @Get('count')
+  @Roles(Role.ADMIN, Role.LECTURER)
+  @ApiOperation({ summary: 'Count students by department and/or level' })
+  @ApiQuery({ name: 'department', required: false })
+  @ApiQuery({ name: 'level', required: false, enum: Level })
+  count(
+    @Query('department') departmentId?: string,
+    @Query('level') level?: Level,
+  ) {
+    return this.studentsService.count(departmentId, level);
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN, Role.STUDENT)
   @ApiOperation({ summary: 'Get student by ID' })

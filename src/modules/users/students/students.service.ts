@@ -56,4 +56,9 @@ export class StudentsService {
     await this.studentsRepository.delete(id);
     return { message: 'Student deleted successfully' };
   }
+
+  async count(departmentId?: string, level?: Level) {
+    const count = await this.studentsRepository.countByDeptLevel(departmentId, level);
+    return { count };
+  }
 }

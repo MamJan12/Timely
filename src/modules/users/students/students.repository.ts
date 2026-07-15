@@ -87,4 +87,13 @@ export class StudentsRepository {
     if (!student) return null;
     return this.prisma.user.delete({ where: { id: student.userId } });
   }
+
+  async countByDeptLevel(departmentId?: string, level?: Level) {
+    return this.prisma.student.count({
+      where: {
+        ...(departmentId && { departmentId }),
+        ...(level && { level }),
+      },
+    });
+  }
 }
