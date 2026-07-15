@@ -47,6 +47,11 @@ const Header = () => {
           <div className="flex flex-col">
             <p className="text-sm text-[var(--gray-800)] leading-tight">{displayName}</p>
             <small className="text-[10px] text-[var(--primary-400)]">{role ?? ''}</small>
+            {user?.lecturer?.staffId && (
+              <small className="text-[9px] font-mono tracking-widest text-[var(--gray-400)] uppercase">
+                {user.lecturer.staffId}
+              </small>
+            )}
           </div>
           <ActionMenu
             trigger={<div className="border border-black rounded-sm"><ChevronDown className="w-4 h-4" /></div>}

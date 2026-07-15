@@ -1,27 +1,31 @@
 import { createBrowserRouter, redirect } from 'react-router-dom';
-import ErrorPage              from '../pages/ErrorPage';
-import LoginPage              from '../pages/auth/loginPage';
-import AdminDashboard         from '../pages/adminDashboard';
-import AdminComplaintPage     from '../pages/adminComplaintPage';
-import SchedulePage           from '../pages/SchedulePage';
-import GenTimetablePage       from '../pages/GenTimetablePage';
-import AppLayout              from '../components/layouts/AppLayout';
-import LecturerTimetablePage  from '../pages/lecturer/LecturerTimetablePage';
-import LecturerComplaintsPage from '../pages/lecturer/LecturerComplaintsPage';
-import StudentTimetablePage   from '../pages/student/StudentTimetablePage';
-import StudentComplaintsPage  from '../pages/student/StudentComplaintsPage';
-import LecturersPage          from '../pages/admin/LecturersPage';
-import CoursesPage            from '../pages/admin/CoursesPage';
-import DepartmentsPage        from '../pages/admin/DepartmentsPage';
-import SettingsPage           from '../pages/admin/SettingsPage';
-import { getUserRole }        from '../utils/authRedirect';
-import type { Role }          from '../lib/types';
+import ErrorPage               from '../pages/ErrorPage';
+import LoginPage               from '../pages/auth/loginPage';
+import AdminDashboard          from '../pages/adminDashboard';
+import AdminComplaintPage      from '../pages/adminComplaintPage';
+import SchedulePage            from '../pages/SchedulePage';
+import GenTimetablePage        from '../pages/GenTimetablePage';
+import AppLayout               from '../components/layouts/AppLayout';
+import LecturerDashboardPage   from '../pages/lecturer/LecturerDashboardPage';
+import LecturerTimetablePage   from '../pages/lecturer/LecturerTimetablePage';
+import LecturerCoursesPage     from '../pages/lecturer/LecturerCoursesPage';
+import LecturerComplaintsPage  from '../pages/lecturer/LecturerComplaintsPage';
+import StudentDashboardPage    from '../pages/student/StudentDashboardPage';
+import StudentTimetablePage    from '../pages/student/StudentTimetablePage';
+import StudentFormBPage        from '../pages/student/StudentFormBPage';
+import StudentComplaintsPage   from '../pages/student/StudentComplaintsPage';
+import LecturersPage           from '../pages/admin/LecturersPage';
+import CoursesPage             from '../pages/admin/CoursesPage';
+import DepartmentsPage         from '../pages/admin/DepartmentsPage';
+import SettingsPage            from '../pages/admin/SettingsPage';
+import { getUserRole }         from '../utils/authRedirect';
+import type { Role }           from '../lib/types';
 
 const roleLoader = () => {
   const role = getUserRole();
   if (role === 'ADMIN')    return redirect('/admin/dashboard');
-  if (role === 'LECTURER') return redirect('/lecturer/timetable');
-  if (role === 'STUDENT')  return redirect('/student/timetable');
+  if (role === 'LECTURER') return redirect('/lecturer/dashboard');
+  if (role === 'STUDENT')  return redirect('/student/dashboard');
   return redirect('/login');
 };
 
@@ -69,7 +73,9 @@ const routes = createBrowserRouter([
     errorElement: <ErrorPage />,
     loader: requireRole('LECTURER'),
     children: [
+      { path: 'dashboard',  element: <LecturerDashboardPage />  },
       { path: 'timetable',  element: <LecturerTimetablePage />  },
+      { path: 'courses',    element: <LecturerCoursesPage />    },
       { path: 'complaints', element: <LecturerComplaintsPage /> },
     ],
   },
@@ -81,7 +87,9 @@ const routes = createBrowserRouter([
     errorElement: <ErrorPage />,
     loader: requireRole('STUDENT'),
     children: [
+      { path: 'dashboard',  element: <StudentDashboardPage />  },
       { path: 'timetable',  element: <StudentTimetablePage />  },
+      { path: 'courses',    element: <StudentFormBPage />      },
       { path: 'complaints', element: <StudentComplaintsPage /> },
     ],
   },

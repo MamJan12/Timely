@@ -3,7 +3,7 @@
 export type Role             = 'ADMIN' | 'LECTURER' | 'STUDENT';
 export type Level            = 'L100' | 'L200' | 'L300' | 'L400' | 'L500';
 export type Semester         = 'FIRST' | 'SECOND';
-export type Day              = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY';
+export type Day              = 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY';
 export type TimetableStatus  = 'DRAFT' | 'PUBLISHED';
 export type ComplaintStatus  = 'PENDING' | 'RESOLVED';
 export type NotificationType = 'COMPLAINT_SUBMITTED' | 'COMPLAINT_RESOLVED' | 'TIMETABLE_PUBLISHED' | 'TIMETABLE_UPDATED';
@@ -97,9 +97,16 @@ export interface TimetableSlot {
   startTime: string;
   endTime: string;
   venue?: string | null;
-  course:   { id: string; code: string; name: string; level: Level };
-  lecturer: { id: string; firstName: string; lastName: string; staffId: string };
-  timetable?: { id: string; departmentId: string; level: Level; semester: Semester };
+  course:    { id: string; code: string; name: string; level: Level };
+  lecturer:  { id: string; firstName: string; lastName: string; staffId: string };
+  timetable?: {
+    id: string;
+    level: Level;
+    semester: Semester;
+    academicYear?: string;
+    status?: TimetableStatus;
+    department?: { name: string; code: string };
+  };
 }
 
 export interface Timetable {

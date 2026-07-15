@@ -11,6 +11,7 @@ import {
     ChevronLeft,
     ChevronRight,
     LogOut,
+    ClipboardList,
 } from "lucide-react";
 import { AppContext } from "../../context/AppContext";
 
@@ -49,10 +50,17 @@ const NAV_CONFIG = {
         portalLabel: "Lecturer Portal",
         sections: [
             {
+                section: "Overview",
+                links: [
+                    { label: "Dashboard",    path: "/lecturer/dashboard",  icon: LayoutDashboard     },
+                    { label: "My Timetable", path: "/lecturer/timetable",  icon: CalendarDays        },
+                ],
+            },
+            {
                 section: "My Portal",
                 links: [
-                    { label: "My Timetable", path: "/lecturer/timetable",  icon: CalendarDays         },
-                    { label: "Complaints",   path: "/lecturer/complaints",  icon: MessageSquareWarning },
+                    { label: "My Courses",  path: "/lecturer/courses",    icon: BookOpen             },
+                    { label: "Complaints",  path: "/lecturer/complaints",  icon: MessageSquareWarning },
                 ],
             },
         ],
@@ -62,10 +70,17 @@ const NAV_CONFIG = {
         portalLabel: "Student Portal",
         sections: [
             {
+                section: "Overview",
+                links: [
+                    { label: "Dashboard",    path: "/student/dashboard",  icon: LayoutDashboard     },
+                    { label: "My Timetable", path: "/student/timetable",  icon: CalendarDays        },
+                ],
+            },
+            {
                 section: "My Portal",
                 links: [
-                    { label: "My Timetable", path: "/student/timetable",  icon: CalendarDays         },
-                    { label: "Complaints",   path: "/student/complaints",  icon: MessageSquareWarning },
+                    { label: "Form B",      path: "/student/courses",    icon: ClipboardList        },
+                    { label: "Complaints",  path: "/student/complaints",  icon: MessageSquareWarning },
                 ],
             },
         ],
@@ -94,7 +109,7 @@ const Sidebar = ({ collapsed, setCollapsed, onWidthChange }: SidebarProps) => {
     const location   = useLocation();
     const navigate   = useNavigate();
 
-    const role       = (user?.role ?? "admin") as keyof typeof NAV_CONFIG;
+    const role       = ((user?.role?.toLowerCase()) ?? "admin") as keyof typeof NAV_CONFIG;
     const config     = NAV_CONFIG[role] ?? NAV_CONFIG.admin;
 
     const [width, setWidth] = useState(collapsed ? MIN_WIDTH : DEFAULT_WIDTH);

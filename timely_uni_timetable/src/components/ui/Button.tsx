@@ -18,10 +18,10 @@ const Button = ({ variant = "primary", type = "button", size = "default", disabl
 {
     const baseStyle = "inline-flex justify-center items-center px-3 py-2 gap-2 text-base whitespace-nowrap transition-colors rounded-full cursor-pointer outline-none disabled:pointer-events-none disabled:opacity-50 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
     const variants: Record<Variant, string> = {
-        primary: "bg-primary-400 text-white",
-        success: "bg-success text-white",
-        destructive: "bg-danger text-white",
-        outline: "border-1 border-danger text-danger"
+        primary: "bg-[var(--primary-400)] text-white",
+        success: "bg-[var(--success)] text-white",
+        destructive: "bg-[var(--danger)] text-white",
+        outline: "border border-[var(--danger)] text-[var(--danger)]"
     }
 
     const sizes: Record<Size, string> = {

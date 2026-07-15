@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X, ChevronRight, CalendarDays, GraduationCap, Layers, BookOpen, Trash2, AlertTriangle } from 'lucide-react';
 import { api } from '../lib/api';
-import type { Timetable, Department, Level, Semester } from '../lib/types';
+import type { Timetable, Department, School, Level, Semester } from '../lib/types';
 import LevelFilter from '../components/ui/LevelFilter';
 import toast from 'react-hot-toast';
 import { formatDate } from '../utils/dateFormatter';
@@ -58,14 +58,20 @@ const SchedulePage = () => {
 
   const [timetables,   setTimetables]   = useState<Timetable[]>([]);
   const [departments,  setDepartments]  = useState<Department[]>([]);
+  const [schools,      setSchools]      = useState<School[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [creating,     setCreating]     = useState(false);
   const [showModal,    setShowModal]    = useState(false);
   const [step,         setStep]         = useState(1);
+  const [modalSchoolId, setModalSchoolId] = useState('');
   const [deptId,       setDeptId]       = useState('');
   const [level,        setLevel]        = useState<Level | ''>('');
   const [semester,     setSemester]     = useState<Semester | ''>('');
-  const [academicYear, setAcademicYear] = useState('2024/2025');
+  const academicYear = (() => {
+    const now = new Date();
+    const startYear = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+    return `${startYear}/${startYear + 1}`;
+  })();
   const [search,       setSearch]       = useState('');
   const [levelFilter,  setLevelFilter]  = useState<Level | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Timetable | null>(null);
@@ -74,12 +80,14 @@ const SchedulePage = () => {
   const load = async () => {
     setLoading(true);
     try {
-      const [tt, depts] = await Promise.all([
+      const [tt, depts, schs] = await Promise.all([
         api.get<Timetable[]>('/timetables').catch(() => [] as Timetable[]),
         api.get<Department[]>('/departments').catch(() => [] as Department[]),
+        api.get<School[]>('/schools').catch(() => [] as School[]),
       ]);
       setTimetables(tt ?? []);
       setDepartments(depts ?? []);
+      setSchools(schs ?? []);
     } catch {
       // silently fall back to empty state
     } finally {
@@ -89,7 +97,7 @@ const SchedulePage = () => {
 
   useEffect(() => { load(); }, []);
 
-  const resetModal = () => { setStep(1); setDeptId(''); setLevel(''); setSemester(''); setShowModal(false); };
+  const resetModal = () => { setStep(1); setModalSchoolId(''); setDeptId(''); setLevel(''); setSemester(''); setShowModal(false); };
 
   const handleCreate = async () => {
     if (!deptId || !level || !semester) return;
@@ -140,10 +148,9 @@ const SchedulePage = () => {
         </p>
       </div>
 
-      <div className="h-px w-full bg-[var(--gray-200)] mb-5" />
+      <div className="h-px w-full bg-[var(--gray-200)] mb-4" />
 
-      {/* ── New Timetable button ── */}
-      <div className="mb-4">
+      <div className="flex justify-end mb-4">
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--gray-dark)] text-white text-sm font-medium hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" /> New Timetable
@@ -277,32 +284,68 @@ const SchedulePage = () => {
 
             <div className="px-6 py-5 flex-1">
 
-              {step === 1 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <BookOpen className="w-4 h-4 text-[var(--primary-400)]" />
-                    <p className="text-sm font-semibold text-[var(--gray-dark)]">Select Department</p>
-                  </div>
-                  {departments.length === 0 ? (
-                    <p className="text-sm text-[var(--gray-400)] text-center py-8">
-                      No departments found. Create one in the Departments section first.
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1">
-                      {departments.map(d => (
-                        <button key={d.id} onClick={() => setDeptId(d.id)}
-                          className={`text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
-                            deptId === d.id
-                              ? 'bg-[var(--gray-dark)] text-white border-[var(--gray-dark)]'
-                              : 'bg-white text-[var(--gray-700)] border-[var(--gray-200)] hover:border-[var(--primary-200)]'
-                          }`}>
-                          {d.name}
-                        </button>
-                      ))}
+              {step === 1 && (() => {
+                const filteredDepts = modalSchoolId
+                  ? departments.filter(d => d.schoolId === modalSchoolId)
+                  : [];
+                return (
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <BookOpen className="w-4 h-4 text-[var(--primary-400)]" />
+                        <p className="text-sm font-semibold text-[var(--gray-dark)]">Select School</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {schools.map(s => {
+                          const active = modalSchoolId === s.id;
+                          return (
+                            <button key={s.id} onClick={() => { setModalSchoolId(s.id); setDeptId(''); }}
+                              className={`px-4 py-2 rounded-xl text-center transition-colors border flex flex-col items-center min-w-[72px] ${
+                                active
+                                  ? 'bg-[var(--gray-dark)] border-[var(--gray-dark)]'
+                                  : 'bg-white border-[var(--gray-200)] hover:border-[var(--gray-400)] hover:bg-[var(--gray-50)]'
+                              }`}>
+                              <span className={`text-xs font-bold leading-tight ${active ? 'text-white' : 'text-[var(--gray-700)]'}`}>
+                                {s.abbreviation}
+                              </span>
+                              <span className={`text-[8px] leading-tight mt-0.5 max-w-[100px] ${active ? 'text-white/50' : 'text-[var(--gray-400)]'}`}>
+                                {s.name}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {modalSchoolId && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <BookOpen className="w-4 h-4 text-[var(--primary-400)]" />
+                          <p className="text-sm font-semibold text-[var(--gray-dark)]">Select Department</p>
+                        </div>
+                        {filteredDepts.length === 0 ? (
+                          <p className="text-sm text-[var(--gray-400)] text-center py-6">
+                            No departments under this school yet.
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
+                            {filteredDepts.map(d => (
+                              <button key={d.id} onClick={() => setDeptId(d.id)}
+                                className={`text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                                  deptId === d.id
+                                    ? 'bg-[var(--gray-dark)] text-white border-[var(--gray-dark)]'
+                                    : 'bg-white text-[var(--gray-700)] border-[var(--gray-200)] hover:border-[var(--primary-200)]'
+                                }`}>
+                                {d.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {step === 2 && (
                 <div>
@@ -352,9 +395,9 @@ const SchedulePage = () => {
                   </div>
                   <div>
                     <label className="text-xs font-medium text-[var(--gray-700)] block mb-1">Academic Year</label>
-                    <input type="text" value={academicYear} onChange={e => setAcademicYear(e.target.value)}
-                      placeholder="e.g. 2024/2025"
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--gray-200)] focus:outline-none focus:border-[var(--primary-200)]" />
+                    <div className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--gray-200)] bg-[var(--gray-100)] text-[var(--gray-700)]">
+                      {academicYear}
+                    </div>
                   </div>
                 </div>
               )}

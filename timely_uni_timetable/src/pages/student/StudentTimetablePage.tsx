@@ -1,39 +1,41 @@
 import { useState, useEffect, useContext } from 'react';
-import { CalendarDays } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CalendarDays, ClipboardList } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { Timetable, Day, SystemSettings } from '../../lib/types';
 import { AppContext } from '../../context/AppContext';
+import TimetableGrid from '../../components/ui/TimetableGrid';
 import toast from 'react-hot-toast';
 
-const DAYS: Day[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
-const DAY_LABELS: Record<Day, string> = { MONDAY: 'Mon', TUESDAY: 'Tue', WEDNESDAY: 'Wed', THURSDAY: 'Thu', FRIDAY: 'Fri' };
+const FORM_B_KEY = (userId: string) => `timely_formb_${userId}`;
 
-const TIME_SLOTS = [
-  { label: '7:00 – 9:00',   start: '07:00' },
-  { label: '9:00 – 11:00',  start: '09:00' },
-  { label: '11:00 – 13:00', start: '11:00' },
-  { label: '13:00 – 15:00', start: '13:00' },
-  { label: '15:00 – 17:00', start: '15:00' },
-  { label: '17:00 – 19:00', start: '17:00' },
-];
+interface FormBData {
+  selectedCourseIds: string[];
+  submittedAt: string;
+}
 
 const StudentTimetablePage = () => {
   const { user } = useContext(AppContext);
+  const navigate = useNavigate();
   const [timetable, setTimetable] = useState<Timetable | null>(null);
-  const [loading,   setLoading]   = useState(true);
+  const [formB, setFormB] = useState<FormBData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user?.student) { setLoading(false); return; }
+
+    try {
+      const raw = localStorage.getItem(FORM_B_KEY(user.id));
+      if (raw) setFormB(JSON.parse(raw));
+    } catch { /* ignore */ }
+
     const load = async () => {
       try {
         const settings = await api.get<SystemSettings>('/settings').catch(() => null);
-        const semester    = settings?.currentSemester ?? 'FIRST';
-        const academicYear = settings?.academicYear    ?? '2024/2025';
-        const data = await api.get<Timetable>(
-          `/timetables/my/student?semester=${semester}&academicYear=${encodeURIComponent(academicYear)}`
-        );
+        const semester = settings?.currentSemester ?? 'FIRST';
+        const data = await api.get<Timetable>(`/timetables/my/student?semester=${semester}`);
         setTimetable(data);
       } catch (err: any) {
-        // 404 = no published timetable yet — show empty state
         if (!err?.message?.toLowerCase().includes('not found')) {
           toast.error(err instanceof Error ? err.message : 'Failed to load timetable');
         }
@@ -41,12 +43,17 @@ const StudentTimetablePage = () => {
         setLoading(false);
       }
     };
-    if (user?.student) load();
-    else setLoading(false);
+    load();
   }, [user]);
 
-  const getSlot = (day: Day, start: string) =>
-    timetable?.slots?.find(s => s.day === day && s.startTime === start);
+  const formBSubmitted = !!formB?.submittedAt;
+  const selectedIds = new Set(formB?.selectedCourseIds ?? []);
+
+  // Apply Form B filter: if Form B submitted, hide slots for unselected courses
+  const filteredSlots = (timetable?.slots ?? []).filter(slot => {
+    if (!formBSubmitted) return true;
+    return selectedIds.has(slot.course.id);
+  });
 
   if (loading) {
     return (
@@ -58,14 +65,37 @@ const StudentTimetablePage = () => {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-5">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--gray-dark)]">My Timetable</h1>
         {timetable && (
           <p className="text-xs text-[var(--gray-400)] mt-1">
             {timetable.department.name} · {timetable.level} · {timetable.semester} Semester · {timetable.academicYear}
+            {formBSubmitted && (
+              <span className="ml-2 text-emerald-600 font-medium">· {selectedIds.size} courses selected</span>
+            )}
           </p>
         )}
       </div>
+
+      {/* Form B prompt */}
+      {!formBSubmitted && (
+        <div
+          onClick={() => navigate('/student/courses')}
+          className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 mb-5 cursor-pointer hover:bg-amber-100/70 transition-colors"
+        >
+          <ClipboardList className="w-5 h-5 text-amber-500 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-800">Submit Form B to personalise your timetable</p>
+            <p className="text-xs text-amber-600">
+              Showing all department courses. Tap here to select only the ones you're enrolled in.
+            </p>
+          </div>
+          <span className="text-xs font-medium text-amber-700 bg-amber-200 px-2.5 py-1 rounded-lg shrink-0 whitespace-nowrap">
+            Select Courses →
+          </span>
+        </div>
+      )}
+
       <div className="h-px w-full bg-[var(--gray-200)] mb-5" />
 
       {!timetable ? (
@@ -75,48 +105,26 @@ const StudentTimetablePage = () => {
           <p className="text-[var(--gray-400)] text-xs mt-1">Check back after the admin publishes the schedule.</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[var(--gray-150)] bg-white shadow-sm w-full overflow-hidden">
-          <div className="flex border-b border-[var(--gray-150)]">
-            <div className="shrink-0 py-3" style={{ width: 'clamp(64px, 14%, 120px)' }} />
-            {DAYS.map(day => (
-              <div key={day} className="flex-1 min-w-0 py-3 text-center text-[10px] sm:text-xs font-semibold text-[var(--gray-600)] uppercase tracking-widest">
-                {DAY_LABELS[day]}
-              </div>
-            ))}
-          </div>
-
-          <div className="divide-y divide-[var(--gray-100)]">
-            {TIME_SLOTS.map(({ label, start }) => (
-              <div key={start} className="flex items-center w-full py-1.5 gap-1 px-1">
-                <div className="shrink-0 pl-2 flex items-center" style={{ width: 'clamp(64px, 14%, 120px)' }}>
-                  <span className="text-[9px] sm:text-[11px] text-[var(--gray-500)] font-medium">
-                    <span className="hidden sm:inline">{label}</span>
-                    <span className="sm:hidden">{start}</span>
-                  </span>
-                </div>
-                {DAYS.map(day => {
-                  const slot = getSlot(day, start);
-                  return (
-                    <div key={day} className="flex-1 min-w-0 min-h-[52px] flex items-center px-0.5">
-                      {slot ? (
-                        <div className="w-full rounded-xl px-2 py-1.5 bg-[var(--primary-200)]/10 border border-[var(--primary-200)]/30">
-                          <p className="text-[10px] font-bold text-[var(--primary-400)] truncate">{slot.course.code}</p>
-                          <p className="text-[9px] text-[var(--gray-700)] truncate leading-tight">{slot.course.name}</p>
-                          <p className="text-[8px] text-[var(--gray-500)] truncate mt-0.5">
-                            {slot.lecturer.firstName} {slot.lecturer.lastName}
-                          </p>
-                          {slot.venue && <p className="text-[8px] text-[var(--gray-400)] truncate">{slot.venue}</p>}
-                        </div>
-                      ) : (
-                        <div className="w-full min-h-[44px] rounded-xl border border-dashed border-[var(--gray-150)]" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
+        <TimetableGrid
+          slots={filteredSlots}
+          renderSlotCard={(slot, isDouble) => (
+            <div className="w-full h-full rounded-xl px-2 py-1.5 bg-[var(--primary-200)]/10 border border-[var(--primary-200)]/30 flex flex-col justify-start gap-px">
+              {isDouble && (
+                <span className="text-[8px] uppercase tracking-widest text-[var(--primary-300)] font-bold mb-0.5">
+                  4h · Double
+                </span>
+              )}
+              <p className="text-[10px] font-bold text-[var(--primary-400)] truncate">{slot.course.code}</p>
+              <p className="text-[9px] text-[var(--gray-700)] truncate leading-tight">{slot.course.name}</p>
+              <p className="text-[8px] text-[var(--gray-500)] truncate mt-0.5">
+                {slot.lecturer.firstName} {slot.lecturer.lastName}
+              </p>
+              {slot.venue && (
+                <p className="text-[8px] text-[var(--gray-400)] truncate">{slot.venue}</p>
+              )}
+            </div>
+          )}
+        />
       )}
     </div>
   );

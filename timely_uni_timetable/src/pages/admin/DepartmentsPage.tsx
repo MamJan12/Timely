@@ -223,18 +223,31 @@ const DepartmentsPage = () => {
             <form onSubmit={handleSave} className="px-6 py-5 space-y-4">
               {/* School */}
               <div>
-                <label className="text-xs font-medium text-[var(--gray-700)] block mb-1">School *</label>
-                <select
-                  required
-                  value={form.schoolId}
-                  onChange={e => setForm(p => ({ ...p, schoolId: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--gray-200)] focus:outline-none focus:border-[var(--primary-200)]"
-                >
-                  <option value="">Select school…</option>
-                  {schools.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.abbreviation})</option>
-                  ))}
-                </select>
+                <label className="text-xs font-medium text-[var(--gray-700)] block mb-2">School *</label>
+                <div className="flex flex-wrap gap-2">
+                  {schools.map(s => {
+                    const active = form.schoolId === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setForm(p => ({ ...p, schoolId: s.id }))}
+                        className={`px-4 py-2 rounded-xl text-center transition-colors border flex flex-col items-center min-w-[72px] ${
+                          active
+                            ? 'bg-[var(--gray-dark)] border-[var(--gray-dark)]'
+                            : 'bg-white border-[var(--gray-200)] hover:border-[var(--gray-400)] hover:bg-[var(--gray-50)]'
+                        }`}
+                      >
+                        <span className={`text-xs font-bold leading-tight ${active ? 'text-white' : 'text-[var(--gray-700)]'}`}>
+                          {s.abbreviation}
+                        </span>
+                        <span className={`text-[8px] leading-tight mt-0.5 max-w-[100px] ${active ? 'text-white/50' : 'text-[var(--gray-400)]'}`}>
+                          {s.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Department name */}
