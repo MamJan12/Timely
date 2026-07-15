@@ -2,7 +2,10 @@ import { useState, useMemo, useEffect } from 'react';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/Table';
-import { CheckCircle, AlertCircle, X, BookOpen, Users, MessageSquareWarning, ChevronDown, RefreshCw } from 'lucide-react';
+import {
+  CheckCircle, AlertCircle, X, BookOpen, Users,
+  MessageSquareWarning, ChevronDown, RefreshCw, Send, CalendarDays, Clock,
+} from 'lucide-react';
 import { api } from '../lib/api';
 import type { Complaint } from '../lib/types';
 import toast from 'react-hot-toast';
@@ -23,15 +26,18 @@ const getName = (c: Complaint) =>
   : c.student  ? `${c.student.firstName}  ${c.student.lastName}`
   : c.submitterRole;
 
+const cap = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+
 const AdminComplaintPage = () => {
-  const [activeTab,  setActiveTab]  = useState<Tab>('Lecturers');
-  const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [selected,   setSelected]   = useState<Complaint | null>(null);
-  const [search,     setSearch]     = useState('');
-  const [sortKey,    setSortKey]    = useState<SortKey>(null);
-  const [showSort,   setShowSort]   = useState(false);
-  const [resolving,  setResolving]  = useState(false);
+  const [activeTab,    setActiveTab]    = useState<Tab>('Lecturers');
+  const [complaints,   setComplaints]   = useState<Complaint[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [selected,     setSelected]     = useState<Complaint | null>(null);
+  const [search,       setSearch]       = useState('');
+  const [sortKey,      setSortKey]      = useState<SortKey>(null);
+  const [showSort,     setShowSort]     = useState(false);
+  const [responseText, setResponseText] = useState('');
+  const [responding,   setResponding]   = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -46,6 +52,9 @@ const AdminComplaintPage = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Reset response text when selected complaint changes
+  useEffect(() => { setResponseText(''); }, [selected?.id]);
 
   const tabData = complaints.filter(c =>
     activeTab === 'Lecturers' ? c.submitterRole === 'LECTURER' : c.submitterRole === 'STUDENT'
@@ -70,17 +79,20 @@ const AdminComplaintPage = () => {
     return [...pending, ...resolved];
   }, [searched, sortKey]);
 
-  const handleResolve = async (id: string) => {
-    setResolving(true);
+  const handleRespond = async (id: string) => {
+    if (!responseText.trim()) { toast.error('Please type a response before sending'); return; }
+    setResponding(true);
     try {
-      await api.patch(`/complaints/${id}/resolve`, {});
-      setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: 'RESOLVED' } : c));
-      setSelected(prev => prev?.id === id ? { ...prev, status: 'RESOLVED' } : prev);
-      toast.success('Complaint resolved');
+      await api.patch(`/complaints/${id}/respond`, { adminResponse: responseText.trim() });
+      setComplaints(prev =>
+        prev.map(c => c.id === id ? { ...c, status: 'RESOLVED', adminResponse: responseText.trim() } : c)
+      );
+      setSelected(prev => prev?.id === id ? { ...prev, status: 'RESOLVED', adminResponse: responseText.trim() } : prev);
+      toast.success('Response sent and complaint resolved');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to resolve');
+      toast.error(err instanceof Error ? err.message : 'Failed to send response');
     } finally {
-      setResolving(false);
+      setResponding(false);
     }
   };
 
@@ -188,8 +200,8 @@ const AdminComplaintPage = () => {
                       <p className="text-sm font-semibold text-[var(--gray-dark)]">{name}</p>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-center font-semibold text-[var(--gray-dark)]">{c.course?.code ?? '—'}</td>
-                  <td className="px-4 py-3 text-center text-[var(--gray-dark)]">{c.level ?? '—'}</td>
+                  <td className="px-4 py-3 text-center font-semibold text-[var(--gray-dark)]">{c.course?.code ?? '-'}</td>
+                  <td className="px-4 py-3 text-center text-[var(--gray-dark)]">{c.level ?? '-'}</td>
                   <td className="px-4 py-3 text-center">
                     {c.status === 'RESOLVED' ? (
                       <span className="inline-flex items-center gap-1 text-[11px] font-medium text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
@@ -219,6 +231,7 @@ const AdminComplaintPage = () => {
       {selected && (
         <Modal>
           <div className="w-full max-w-lg mx-auto">
+            {/* Modal header */}
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[var(--primary-200)] flex items-center justify-center shrink-0">
@@ -235,31 +248,50 @@ const AdminComplaintPage = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            {/* Meta grid */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
               <div className="bg-[var(--gray-50)] border border-[var(--gray-150)] rounded-xl px-3 py-3">
                 <div className="flex items-center gap-1.5 text-[var(--gray-500)] mb-1">
                   <Users className="w-3.5 h-3.5" />
                   <span className="text-[10px] uppercase tracking-wide font-medium">Level</span>
                 </div>
-                <p className="text-sm font-semibold text-[var(--gray-dark)]">{selected.level ?? '—'}</p>
+                <p className="text-sm font-semibold text-[var(--gray-dark)]">{selected.level ?? '-'}</p>
               </div>
               <div className="bg-[var(--gray-50)] border border-[var(--gray-150)] rounded-xl px-3 py-3">
                 <div className="flex items-center gap-1.5 text-[var(--gray-500)] mb-1">
                   <BookOpen className="w-3.5 h-3.5" />
                   <span className="text-[10px] uppercase tracking-wide font-medium">Code</span>
                 </div>
-                <p className="text-sm font-semibold text-[var(--gray-dark)]">{selected.course?.code ?? '—'}</p>
+                <p className="text-sm font-semibold text-[var(--gray-dark)]">{selected.course?.code ?? '-'}</p>
               </div>
               <div className="bg-[var(--gray-50)] border border-[var(--gray-150)] rounded-xl px-3 py-3">
                 <div className="flex items-center gap-1.5 text-[var(--gray-500)] mb-1">
                   <BookOpen className="w-3.5 h-3.5" />
                   <span className="text-[10px] uppercase tracking-wide font-medium">Course</span>
                 </div>
-                <p className="text-sm font-semibold text-[var(--gray-dark)] truncate">{selected.course?.name ?? '—'}</p>
+                <p className="text-sm font-semibold text-[var(--gray-dark)] truncate">{selected.course?.name ?? '-'}</p>
               </div>
             </div>
 
-            <div className="mb-6">
+            {/* Requested time (lecturer complaints only) */}
+            {selected.submitterRole === 'LECTURER' && selected.requestedDay && (
+              <div className="mb-5 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                <p className="text-[10px] uppercase tracking-wide font-semibold text-blue-500 mb-2">Requested Time Slot</p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="flex items-center gap-1.5 text-xs text-blue-700 font-medium">
+                    <CalendarDays className="w-3.5 h-3.5" /> {cap(selected.requestedDay)}
+                  </span>
+                  {selected.requestedStartTime && selected.requestedEndTime && (
+                    <span className="flex items-center gap-1.5 text-xs text-blue-700 font-medium">
+                      <Clock className="w-3.5 h-3.5" /> {selected.requestedStartTime} – {selected.requestedEndTime}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Complaint description */}
+            <div className="mb-5">
               <div className="flex items-center gap-2 mb-2">
                 <MessageSquareWarning className="w-4 h-4 text-[var(--primary-400)]" />
                 <p className="text-xs font-semibold text-[var(--gray-dark)] uppercase tracking-wide">Complaint</p>
@@ -269,7 +301,8 @@ const AdminComplaintPage = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 mb-6">
+            {/* Status */}
+            <div className="flex items-center gap-2 mb-5">
               <span className="text-xs text-[var(--gray-500)]">Status:</span>
               {selected.status === 'RESOLVED' ? (
                 <span className="inline-flex items-center gap-1 text-[11px] font-medium text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
@@ -282,16 +315,42 @@ const AdminComplaintPage = () => {
               )}
             </div>
 
+            {/* Admin response area */}
+            {selected.status === 'RESOLVED' && selected.adminResponse ? (
+              <div className="mb-5 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
+                <p className="text-[10px] uppercase tracking-wide font-semibold text-emerald-600 mb-1">Admin Response</p>
+                <p className="text-sm text-emerald-800 leading-relaxed">{selected.adminResponse}</p>
+              </div>
+            ) : selected.status === 'PENDING' ? (
+              <div className="mb-5">
+                <label className="text-xs font-semibold text-[var(--gray-dark)] block mb-1.5">
+                  Your Response <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={responseText}
+                  onChange={e => setResponseText(e.target.value)}
+                  rows={3}
+                  placeholder="Type your response to this complaint…"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--gray-200)] focus:outline-none focus:border-[var(--primary-200)] resize-none"
+                />
+              </div>
+            ) : null}
+
+            {/* Actions */}
             <div className="flex justify-end gap-3">
               <button onClick={() => setSelected(null)}
                 className="text-sm px-4 py-2 rounded-full border border-[var(--gray-200)] text-[var(--gray-700)] hover:bg-[var(--gray-100)] transition-colors">
-                Cancel
+                {selected.status === 'RESOLVED' ? 'Close' : 'Cancel'}
               </button>
               {selected.status === 'PENDING' && (
-                <Button variant="success" onClick={() => handleResolve(selected.id)} disabled={resolving}
-                  className="text-sm flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  {resolving ? 'Resolving…' : 'Confirm as Resolved'}
+                <Button
+                  variant="success"
+                  onClick={() => handleRespond(selected.id)}
+                  disabled={responding}
+                  className="text-sm flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  {responding ? 'Sending…' : 'Send Response'}
                 </Button>
               )}
             </div>

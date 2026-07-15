@@ -23,7 +23,7 @@ const AppLayout = () => {
                 onWidthChange={handleWidthChange}
             />
 
-            {/* Main content — margin-left always equals the sidebar's actual pixel width */}
+            {/* Main content - margin-left always equals the sidebar's actual pixel width */}
             <main
                 className="flex-1 flex flex-col min-w-0 overflow-hidden"
                 style={{ marginLeft: sidebarWidth }}

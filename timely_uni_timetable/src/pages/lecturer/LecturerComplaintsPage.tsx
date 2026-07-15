@@ -1,36 +1,27 @@
 import { useState, useEffect, useContext } from 'react';
-import { CheckCircle, AlertCircle, Plus, X } from 'lucide-react';
+import { CheckCircle, AlertCircle, Plus, X, CalendarDays, Clock, MessageSquare } from 'lucide-react';
 import { api } from '../../lib/api';
-import type { Complaint, Course } from '../../lib/types';
+import type { Complaint } from '../../lib/types';
 import { AppContext } from '../../context/AppContext';
 import Button from '../../components/ui/Button';
 import toast from 'react-hot-toast';
 import { formatDate } from '../../utils/dateFormatter';
 
+const cap = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+
 const LecturerComplaintsPage = () => {
   const { user } = useContext(AppContext);
-  const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [courses,    setCourses]    = useState<Course[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [showForm,   setShowForm]   = useState(false);
-  const [description, setDescription] = useState('');
-  const [courseId,    setCourseId]    = useState('');
-  const [submitting,  setSubmitting]  = useState(false);
+  const [complaints,   setComplaints]   = useState<Complaint[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [showForm,     setShowForm]     = useState(false);
+  const [description,  setDescription]  = useState('');
+  const [submitting,   setSubmitting]   = useState(false);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [c, courses] = await Promise.all([
-          api.get<Complaint[]>('/complaints/my'),
-          api.get<Course[]>('/courses/lecturer/' + (user?.lecturer?.id ?? '')),
-        ]);
-        setComplaints(c);
-        setCourses(courses);
-      } catch { /* show empty */ }
-      finally { setLoading(false); }
-    };
-    if (user?.lecturer?.id) load();
-    else setLoading(false);
+    api.get<Complaint[]>('/complaints/my')
+      .then(setComplaints)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,9 +29,9 @@ const LecturerComplaintsPage = () => {
     if (!description.trim()) { toast.error('Please describe the issue'); return; }
     setSubmitting(true);
     try {
-      const newC = await api.post<Complaint>('/complaints', { description: description.trim(), courseId: courseId || undefined });
+      const newC = await api.post<Complaint>('/complaints', { description: description.trim() });
       setComplaints(prev => [newC, ...prev]);
-      setDescription(''); setCourseId(''); setShowForm(false);
+      setDescription(''); setShowForm(false);
       toast.success('Complaint submitted');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit');
@@ -52,7 +43,7 @@ const LecturerComplaintsPage = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-[var(--gray-dark)]">Complaints</h1>
-          <p className="text-xs text-[var(--gray-400)] mt-1">Submit and track your complaints</p>
+          <p className="text-xs text-[var(--gray-400)] mt-1">Submit and track your complaints. Tap a timetable slot to request a time change.</p>
         </div>
         <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
           <Plus className="w-4 h-4" /> New Complaint
@@ -71,19 +62,14 @@ const LecturerComplaintsPage = () => {
             </div>
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
               <div>
-                <label className="text-xs font-medium text-[var(--gray-700)] block mb-1">Course (optional)</label>
-                <select value={courseId} onChange={e => setCourseId(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--gray-200)] focus:outline-none focus:border-[var(--primary-200)]">
-                  <option value="">No specific course</option>
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
-                </select>
-              </div>
-              <div>
                 <label className="text-xs font-medium text-[var(--gray-700)] block mb-1">Description *</label>
                 <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
                   placeholder="Describe your issue clearly…"
                   className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--gray-200)] focus:outline-none focus:border-[var(--primary-200)] resize-none" />
               </div>
+              <p className="text-xs text-[var(--gray-400)]">
+                To request a time change for a specific course, go to your timetable and tap the slot.
+              </p>
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={() => setShowForm(false)}
                   className="px-4 py-2 rounded-full border border-[var(--gray-200)] text-sm text-[var(--gray-700)] hover:bg-[var(--gray-100)]">
@@ -111,12 +97,28 @@ const LecturerComplaintsPage = () => {
         <div className="space-y-3">
           {complaints.map(c => (
             <div key={c.id} className="bg-white rounded-2xl border border-[var(--gray-150)] p-5">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex-1">
                   {c.course && (
-                    <p className="text-xs font-semibold text-[var(--primary-400)] mb-1">{c.course.code} — {c.course.name}</p>
+                    <p className="text-xs font-semibold text-[var(--primary-400)] mb-1">{c.course.code}: {c.course.name}</p>
                   )}
                   <p className="text-sm text-[var(--gray-700)] leading-relaxed">{c.description}</p>
+
+                  {/* Requested time change */}
+                  {c.requestedDay && (
+                    <div className="flex items-center gap-3 mt-2 flex-wrap">
+                      <span className="text-[10px] text-[var(--gray-400)] font-medium uppercase tracking-wide">Requested:</span>
+                      <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                        <CalendarDays className="w-3 h-3" /> {cap(c.requestedDay)}
+                      </span>
+                      {c.requestedStartTime && c.requestedEndTime && (
+                        <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                          <Clock className="w-3 h-3" /> {c.requestedStartTime} – {c.requestedEndTime}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <p className="text-[10px] text-[var(--gray-400)] mt-2">{formatDate(c.createdAt)}</p>
                 </div>
                 {c.status === 'RESOLVED' ? (
@@ -129,6 +131,17 @@ const LecturerComplaintsPage = () => {
                   </span>
                 )}
               </div>
+
+              {/* Admin response */}
+              {c.adminResponse && (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 mt-1">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide">Admin Response</span>
+                  </div>
+                  <p className="text-sm text-emerald-800 leading-relaxed">{c.adminResponse}</p>
+                </div>
+              )}
             </div>
           ))}
         </div>

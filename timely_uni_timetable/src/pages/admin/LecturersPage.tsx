@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Pencil, Trash2, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import RowActions from '../../components/ui/RowActions';
 import { api } from '../../lib/api';
 import type { Lecturer, Department } from '../../lib/types';
 import Button from '../../components/ui/Button';
@@ -130,13 +131,10 @@ const LecturersPage = () => {
                 </TableCell>
                 <TableCell>{l.staffId}</TableCell>
                 <TableCell className="text-[var(--gray-500)]">{l.user.email}</TableCell>
-                <TableCell>{l.department?.name ?? '—'}</TableCell>
+                <TableCell>{l.department?.name ?? '-'}</TableCell>
                 <TableCell className="text-[var(--gray-500)]">{formatDate(l.createdAt)}</TableCell>
                 <TableCell>
-                  <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => openEdit(l)} className="p-1.5 rounded-lg hover:bg-[var(--gray-100)]"><Pencil className="w-3.5 h-3.5 text-[var(--gray-500)]" /></button>
-                    <button onClick={() => setDeleteTarget(l)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 text-red-500" /></button>
-                  </div>
+                  <RowActions onEdit={() => openEdit(l)} onDelete={() => setDeleteTarget(l)} />
                 </TableCell>
               </tr>
             ))}

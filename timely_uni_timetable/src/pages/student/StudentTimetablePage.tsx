@@ -2,9 +2,10 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, ClipboardList } from 'lucide-react';
 import { api } from '../../lib/api';
-import type { Timetable, Day, SystemSettings } from '../../lib/types';
+import type { Timetable, TimetableSlot, SystemSettings } from '../../lib/types';
 import { AppContext } from '../../context/AppContext';
 import TimetableGrid from '../../components/ui/TimetableGrid';
+import SlotComplaintModal from '../../components/ui/SlotComplaintModal';
 import toast from 'react-hot-toast';
 
 const FORM_B_KEY = (userId: string) => `timely_formb_${userId}`;
@@ -17,9 +18,10 @@ interface FormBData {
 const StudentTimetablePage = () => {
   const { user } = useContext(AppContext);
   const navigate = useNavigate();
-  const [timetable, setTimetable] = useState<Timetable | null>(null);
-  const [formB, setFormB] = useState<FormBData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [timetable,    setTimetable]    = useState<Timetable | null>(null);
+  const [formB,        setFormB]        = useState<FormBData | null>(null);
+  const [loading,      setLoading]      = useState(true);
+  const [selectedSlot, setSelectedSlot] = useState<TimetableSlot | null>(null);
 
   useEffect(() => {
     if (!user?.student) { setLoading(false); return; }
@@ -47,9 +49,8 @@ const StudentTimetablePage = () => {
   }, [user]);
 
   const formBSubmitted = !!formB?.submittedAt;
-  const selectedIds = new Set(formB?.selectedCourseIds ?? []);
+  const selectedIds    = new Set(formB?.selectedCourseIds ?? []);
 
-  // Apply Form B filter: if Form B submitted, hide slots for unselected courses
   const filteredSlots = (timetable?.slots ?? []).filter(slot => {
     if (!formBSubmitted) return true;
     return selectedIds.has(slot.course.id);
@@ -105,25 +106,40 @@ const StudentTimetablePage = () => {
           <p className="text-[var(--gray-400)] text-xs mt-1">Check back after the admin publishes the schedule.</p>
         </div>
       ) : (
-        <TimetableGrid
-          slots={filteredSlots}
-          renderSlotCard={(slot, isDouble) => (
-            <div className="w-full h-full rounded-xl px-2 py-1.5 bg-[var(--primary-200)]/10 border border-[var(--primary-200)]/30 flex flex-col justify-start gap-px">
-              {isDouble && (
-                <span className="text-[8px] uppercase tracking-widest text-[var(--primary-300)] font-bold mb-0.5">
-                  4h · Double
-                </span>
-              )}
-              <p className="text-[10px] font-bold text-[var(--primary-400)] truncate">{slot.course.code}</p>
-              <p className="text-[9px] text-[var(--gray-700)] truncate leading-tight">{slot.course.name}</p>
-              <p className="text-[8px] text-[var(--gray-500)] truncate mt-0.5">
-                {slot.lecturer.firstName} {slot.lecturer.lastName}
-              </p>
-              {slot.venue && (
-                <p className="text-[8px] text-[var(--gray-400)] truncate">{slot.venue}</p>
-              )}
-            </div>
-          )}
+        <>
+          <p className="text-[10px] text-[var(--gray-400)] mb-3">Tap any slot to report an issue with that course.</p>
+          <TimetableGrid
+            slots={filteredSlots}
+            renderSlotCard={(slot, isDouble) => (
+              <div
+                onClick={() => setSelectedSlot(slot)}
+                className="w-full h-full rounded-xl px-2 py-1.5 bg-[var(--primary-200)]/10 border border-[var(--primary-200)]/30 flex flex-col justify-start gap-px cursor-pointer hover:ring-2 hover:ring-[var(--primary-300)] transition-all"
+              >
+                {isDouble && (
+                  <span className="text-[8px] uppercase tracking-widest text-[var(--primary-300)] font-bold mb-0.5">
+                    4h · Double
+                  </span>
+                )}
+                <p className="text-[10px] font-bold text-[var(--primary-400)] truncate">{slot.course.code}</p>
+                <p className="text-[9px] text-[var(--gray-700)] truncate leading-tight">{slot.course.name}</p>
+                <p className="text-[8px] text-[var(--gray-500)] truncate mt-0.5">
+                  {slot.lecturer.firstName} {slot.lecturer.lastName}
+                </p>
+                {slot.venue && (
+                  <p className="text-[8px] text-[var(--gray-400)] truncate">{slot.venue}</p>
+                )}
+              </div>
+            )}
+          />
+        </>
+      )}
+
+      {selectedSlot && (
+        <SlotComplaintModal
+          slot={selectedSlot}
+          role="STUDENT"
+          level={timetable?.level}
+          onClose={() => setSelectedSlot(null)}
         />
       )}
     </div>

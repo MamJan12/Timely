@@ -3,11 +3,13 @@ import { CalendarDays } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { TimetableSlot } from '../../lib/types';
 import TimetableGrid from '../../components/ui/TimetableGrid';
+import SlotComplaintModal from '../../components/ui/SlotComplaintModal';
 import toast from 'react-hot-toast';
 
 const LecturerTimetablePage = () => {
-  const [slots,   setSlots]   = useState<TimetableSlot[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [slots,        setSlots]        = useState<TimetableSlot[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [selectedSlot, setSelectedSlot] = useState<TimetableSlot | null>(null);
 
   useEffect(() => {
     api.get<TimetableSlot[]>('/timetables/my/lecturer')
@@ -31,7 +33,7 @@ const LecturerTimetablePage = () => {
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--gray-dark)]">My Timetable</h1>
         <p className="text-xs text-[var(--gray-400)] mt-1">
-          {slots.length} slot{slots.length !== 1 ? 's' : ''} across all departments
+          {slots.length} slot{slots.length !== 1 ? 's' : ''} across all departments · tap a slot to request a time change
         </p>
       </div>
 
@@ -55,10 +57,13 @@ const LecturerTimetablePage = () => {
         <TimetableGrid
           slots={slots}
           renderSlotCard={(slot, isDouble) => {
-            const level = slot.timetable?.level ?? slot.course.level;
+            const level   = slot.timetable?.level ?? slot.course.level;
             const isDraft = slot.timetable?.status === 'DRAFT';
             return (
-              <div className={`w-full h-full rounded-xl px-2 py-1.5 flex flex-col justify-start gap-px border ${isDraft ? 'bg-amber-50/60 border-amber-200/60' : 'bg-[var(--primary-200)]/10 border-[var(--primary-200)]/30'}`}>
+              <div
+                onClick={() => setSelectedSlot(slot)}
+                className={`w-full h-full rounded-xl px-2 py-1.5 flex flex-col justify-start gap-px border cursor-pointer hover:ring-2 hover:ring-[var(--primary-300)] transition-all ${isDraft ? 'bg-amber-50/60 border-amber-200/60' : 'bg-[var(--primary-200)]/10 border-[var(--primary-200)]/30'}`}
+              >
                 <div className="flex items-center gap-1 mb-0.5">
                   <span className={`text-[8px] font-bold text-white rounded px-1 py-px leading-none shrink-0 ${isDraft ? 'bg-amber-400' : 'bg-[var(--primary-400)]'}`}>
                     {level}
@@ -81,6 +86,14 @@ const LecturerTimetablePage = () => {
               </div>
             );
           }}
+        />
+      )}
+
+      {selectedSlot && (
+        <SlotComplaintModal
+          slot={selectedSlot}
+          role="LECTURER"
+          onClose={() => setSelectedSlot(null)}
         />
       )}
     </div>

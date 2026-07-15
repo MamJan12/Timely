@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BookOpen, Users, Search } from 'lucide-react';
 import { api } from '../../lib/api';
-import type { Course } from '../../lib/types';
-import { AppContext } from '../../context/AppContext';
+import type { TimetableSlot } from '../../lib/types';
 import toast from 'react-hot-toast';
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -14,39 +13,38 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 const LecturerCoursesPage: React.FC = () => {
-  const { user } = useContext(AppContext);
-
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [slots,         setSlots]         = useState<TimetableSlot[]>([]);
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [search,        setSearch]        = useState('');
+  const [loading,       setLoading]       = useState(true);
 
   useEffect(() => {
-    if (!user?.lecturer) return;
     const load = async () => {
       try {
-        const c = await api.get<Course[]>(`/courses/lecturer/${user.lecturer!.id}`);
-        setCourses(c);
+        const s = await api.get<TimetableSlot[]>('/timetables/my/lecturer');
+        setSlots(s);
 
-        const seen = new Set<string>();
+        // Count students per unique dept+level combo
+        const seen   = new Set<string>();
         const combos: { departmentId: string; level: string; key: string }[] = [];
-        for (const co of c) {
-          const key = `${co.department.id}-${co.level}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            combos.push({ departmentId: co.department.id, level: co.level, key });
+        for (const slot of s) {
+          const deptId = slot.timetable?.department?.id;
+          const level  = slot.course.level;
+          if (deptId) {
+            const key = `${deptId}-${level}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              combos.push({ departmentId: deptId, level, key });
+            }
           }
         }
 
         if (combos.length > 0) {
           const results = await Promise.all(
             combos.map(({ departmentId, level, key }) =>
-              api
-                .get<{ count: number }>(
-                  `/students/count?department=${departmentId}&level=${level}`
-                )
-                .then(r => ({ key, count: r.count }))
-                .catch(() => ({ key, count: 0 }))
+              api.get<{ count: number }>(`/students/count?department=${departmentId}&level=${level}`)
+                 .then(r => ({ key, count: r.count }))
+                 .catch(() => ({ key, count: 0 }))
             )
           );
           setStudentCounts(Object.fromEntries(results.map(r => [r.key, r.count])));
@@ -58,9 +56,28 @@ const LecturerCoursesPage: React.FC = () => {
       }
     };
     load();
-  }, [user]);
+  }, []);
 
-  const filtered = courses.filter(
+  // Derive unique courses from slots
+  const uniqueCourses = useMemo(() => {
+    const seen = new Set<string>();
+    return slots
+      .filter(s => {
+        if (seen.has(s.course.id)) return false;
+        seen.add(s.course.id);
+        return true;
+      })
+      .map(s => ({
+        id:             s.course.id,
+        code:           s.course.code,
+        name:           s.course.name,
+        level:          s.course.level,
+        departmentName: s.timetable?.department?.name ?? '',
+        departmentId:   s.timetable?.department?.id   ?? '',
+      }));
+  }, [slots]);
+
+  const filtered = uniqueCourses.filter(
     c =>
       !search ||
       c.code.toLowerCase().includes(search.toLowerCase()) ||
@@ -68,7 +85,7 @@ const LecturerCoursesPage: React.FC = () => {
       c.level.toLowerCase().includes(search.toLowerCase())
   );
 
-  const grouped = filtered.reduce<Record<string, Course[]>>((acc, c) => {
+  const grouped = filtered.reduce<Record<string, typeof filtered>>((acc, c) => {
     acc[c.level] = [...(acc[c.level] ?? []), c];
     return acc;
   }, {});
@@ -86,11 +103,10 @@ const LecturerCoursesPage: React.FC = () => {
           My Courses
         </h1>
         <p className="text-xs text-[var(--gray-400)] mt-1">
-          {courses.length} course{courses.length !== 1 ? 's' : ''} assigned
+          {uniqueCourses.length} course{uniqueCourses.length !== 1 ? 's' : ''} from your timetable
         </p>
       </div>
 
-      {/* Search */}
       <div className="relative mb-6 max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--gray-400)]" />
         <input
@@ -105,27 +121,27 @@ const LecturerCoursesPage: React.FC = () => {
       {loading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl border border-[var(--gray-150)] p-5 h-24 animate-pulse"
-            />
+            <div key={i} className="bg-white rounded-2xl border border-[var(--gray-150)] p-5 h-24 animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl border border-[var(--gray-150)] p-12 text-center">
           <BookOpen className="w-10 h-10 text-[var(--gray-300)] mx-auto mb-2" />
           <p className="text-sm text-[var(--gray-500)]">
-            {search ? 'No courses match your search.' : 'No courses assigned yet.'}
+            {search ? 'No courses match your search.' : 'No courses in your timetable yet.'}
           </p>
+          {!search && (
+            <p className="text-xs text-[var(--gray-400)] mt-1">
+              Contact your admin to assign courses and publish the timetable.
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
           {levels.map(level => (
             <section key={level}>
               <div className="flex items-center gap-3 mb-3">
-                <span
-                  className={`text-xs font-bold px-2.5 py-1 rounded-full ${LEVEL_COLORS[level] ?? 'bg-gray-100 text-gray-700'}`}
-                >
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${LEVEL_COLORS[level] ?? 'bg-gray-100 text-gray-700'}`}>
                   {level}
                 </span>
                 <p className="text-sm font-semibold text-[var(--gray-dark)]">
@@ -135,21 +151,14 @@ const LecturerCoursesPage: React.FC = () => {
 
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {grouped[level].map(course => {
-                  const countKey = `${course.department.id}-${course.level}`;
-                  const count = studentCounts[countKey] ?? 0;
+                  const countKey = `${course.departmentId}-${course.level}`;
+                  const count    = studentCounts[countKey] ?? 0;
                   return (
-                    <div
-                      key={course.id}
-                      className="bg-white rounded-2xl border border-[var(--gray-150)] p-5 flex flex-col gap-3"
-                    >
+                    <div key={course.id} className="bg-white rounded-2xl border border-[var(--gray-150)] p-5 flex flex-col gap-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-[var(--primary-400)] truncate">
-                            {course.code}
-                          </p>
-                          <p className="text-sm font-semibold text-[var(--gray-dark)] leading-snug mt-0.5">
-                            {course.name}
-                          </p>
+                          <p className="text-xs font-bold text-[var(--primary-400)] truncate">{course.code}</p>
+                          <p className="text-sm font-semibold text-[var(--gray-dark)] leading-snug mt-0.5">{course.name}</p>
                         </div>
                         <div className="w-9 h-9 rounded-xl bg-[var(--primary-200)]/10 flex items-center justify-center shrink-0">
                           <BookOpen className="w-4 h-4 text-[var(--primary-400)]" />
@@ -158,29 +167,14 @@ const LecturerCoursesPage: React.FC = () => {
 
                       <div className="border-t border-[var(--gray-100)] pt-3 flex items-center justify-between">
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] text-[var(--gray-400)] uppercase tracking-wide">
-                            Department
-                          </p>
-                          <p className="text-xs font-medium text-[var(--gray-700)] truncate">
-                            {course.department.name}
-                          </p>
+                          <p className="text-[10px] text-[var(--gray-400)] uppercase tracking-wide">Department</p>
+                          <p className="text-xs font-medium text-[var(--gray-700)] truncate">{course.departmentName}</p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0 ml-2">
                           <Users className="w-3.5 h-3.5 text-[var(--gray-400)]" />
                           <span className="text-sm font-bold text-[var(--gray-dark)]">{count}</span>
                           <span className="text-[10px] text-[var(--gray-400)]">students</span>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-medium text-[var(--gray-500)]">
-                          {course.credits} credits
-                        </span>
-                        {course.isShared && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                            Shared
-                          </span>
-                        )}
                       </div>
                     </div>
                   );

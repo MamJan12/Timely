@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Users, CalendarDays, Building2, ChevronRight } from 'lucide-react';
+import { BookOpen, Users, CalendarDays, ChevronRight } from 'lucide-react';
 import { api } from '../../lib/api';
-import type { Course, TimetableSlot } from '../../lib/types';
+import type { TimetableSlot } from '../../lib/types';
 import { AppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 
@@ -29,48 +29,58 @@ const StatCard = ({
 );
 
 const LecturerDashboardPage: React.FC = () => {
-  const { user } = useContext(AppContext);
-  const navigate = useNavigate();
-
-  const [courses, setCourses] = useState<Course[]>([]);
+  const { user }    = useContext(AppContext);
+  const navigate    = useNavigate();
+  const [slots,         setSlots]         = useState<TimetableSlot[]>([]);
   const [totalStudents, setTotalStudents] = useState(0);
-  const [slots, setSlots] = useState<TimetableSlot[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading,       setLoading]       = useState(true);
 
   const displayName = user?.lecturer
     ? `${user.lecturer.firstName} ${user.lecturer.lastName}`
     : user?.email ?? 'Lecturer';
 
+  // Derive unique courses from timetable slots
+  const uniqueCourses = useMemo(() => {
+    const seen = new Set<string>();
+    return slots
+      .filter(s => {
+        if (seen.has(s.course.id)) return false;
+        seen.add(s.course.id);
+        return true;
+      })
+      .map(s => ({
+        id:             s.course.id,
+        code:           s.course.code,
+        name:           s.course.name,
+        level:          s.course.level,
+        departmentName: s.timetable?.department?.name ?? '',
+        departmentId:   s.timetable?.department?.id   ?? '',
+      }));
+  }, [slots]);
+
   useEffect(() => {
-    if (!user?.lecturer) return;
     const load = async () => {
       try {
-        const [c, s] = await Promise.all([
-          api.get<Course[]>(`/courses/lecturer/${user.lecturer!.id}`),
-          api.get<TimetableSlot[]>('/timetables/my/lecturer').catch(() => [] as TimetableSlot[]),
-        ]);
-        setCourses(c);
+        const s = await api.get<TimetableSlot[]>('/timetables/my/lecturer').catch(() => [] as TimetableSlot[]);
         setSlots(s);
 
-        // Count students per unique dept+level combination
-        const seen = new Set<string>();
+        // Count students per unique dept+level from slots
+        const seen   = new Set<string>();
         const combos: { departmentId: string; level: string }[] = [];
-        for (const co of c) {
-          const key = `${co.department.id}-${co.level}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            combos.push({ departmentId: co.department.id, level: co.level });
+        for (const slot of s) {
+          const deptId = slot.timetable?.department?.id;
+          const level  = slot.course.level;
+          if (deptId) {
+            const key = `${deptId}-${level}`;
+            if (!seen.has(key)) { seen.add(key); combos.push({ departmentId: deptId, level }); }
           }
         }
 
         if (combos.length > 0) {
           const counts = await Promise.all(
             combos.map(({ departmentId, level }) =>
-              api
-                .get<{ count: number }>(
-                  `/students/count?department=${departmentId}&level=${level}`
-                )
-                .catch(() => ({ count: 0 }))
+              api.get<{ count: number }>(`/students/count?department=${departmentId}&level=${level}`)
+                 .catch(() => ({ count: 0 }))
             )
           );
           setTotalStudents(counts.reduce((sum, r) => sum + r.count, 0));
@@ -82,9 +92,7 @@ const LecturerDashboardPage: React.FC = () => {
       }
     };
     load();
-  }, [user]);
-
-  const deptCount = new Set(courses.map(c => c.department.id)).size;
+  }, []);
 
   return (
     <div className="min-h-screen bg-[var(--gray-light)] px-3 sm:px-6 py-5 sm:py-8 font-sans">
@@ -108,21 +116,18 @@ const LecturerDashboardPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Stats */}
+      {/* Stats - 3 cards */}
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl border border-[var(--gray-150)] p-5 h-20 animate-pulse"
-            />
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-[var(--gray-150)] p-5 h-20 animate-pulse" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <StatCard
             label="Courses Assigned"
-            value={courses.length}
+            value={uniqueCourses.length}
             icon={BookOpen}
             color="bg-blue-100 text-blue-600"
           />
@@ -137,12 +142,6 @@ const LecturerDashboardPage: React.FC = () => {
             value={slots.length}
             icon={CalendarDays}
             color="bg-purple-100 text-purple-600"
-          />
-          <StatCard
-            label="Departments"
-            value={deptCount}
-            icon={Building2}
-            color="bg-orange-100 text-orange-600"
           />
         </div>
       )}
@@ -163,7 +162,7 @@ const LecturerDashboardPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Course list */}
+      {/* Course list (derived from slots) */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base sm:text-lg font-semibold text-[var(--gray-dark)] tracking-tight">
@@ -180,13 +179,10 @@ const LecturerDashboardPage: React.FC = () => {
         {loading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl p-4 h-16 animate-pulse border border-[var(--gray-150)]"
-              />
+              <div key={i} className="bg-white rounded-2xl p-4 h-16 animate-pulse border border-[var(--gray-150)]" />
             ))}
           </div>
-        ) : courses.length === 0 ? (
+        ) : uniqueCourses.length === 0 ? (
           <div className="bg-white rounded-2xl border border-[var(--gray-150)] p-8 text-center">
             <BookOpen className="w-10 h-10 text-[var(--gray-300)] mx-auto mb-2" />
             <p className="text-sm text-[var(--gray-500)]">No courses assigned yet.</p>
@@ -196,7 +192,7 @@ const LecturerDashboardPage: React.FC = () => {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {courses.slice(0, 6).map(course => (
+            {uniqueCourses.slice(0, 6).map(course => (
               <div
                 key={course.id}
                 className="bg-white rounded-2xl border border-[var(--gray-150)] px-5 py-3 flex items-center gap-4"
@@ -206,21 +202,21 @@ const LecturerDashboardPage: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[var(--gray-dark)] truncate">
-                    {course.code} — {course.name}
+                    {course.code}: {course.name}
                   </p>
-                  <p className="text-xs text-[var(--gray-500)] truncate">{course.department.name}</p>
+                  <p className="text-xs text-[var(--gray-500)] truncate">{course.departmentName}</p>
                 </div>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--primary-200)]/15 text-[var(--primary-400)] shrink-0">
                   {course.level}
                 </span>
               </div>
             ))}
-            {courses.length > 6 && (
+            {uniqueCourses.length > 6 && (
               <button
                 onClick={() => navigate('/lecturer/courses')}
                 className="text-xs text-[var(--primary-400)] text-center py-2 hover:underline"
               >
-                +{courses.length - 6} more courses
+                +{uniqueCourses.length - 6} more courses
               </button>
             )}
           </div>

@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, X, CheckCircle, AlertTriangle, Wand2, Trash2 } from 'lucide-react';
+import { ArrowLeft, X, CheckCircle, AlertTriangle, Wand2, Trash2, MessageSquareWarning, Send, CalendarDays, Clock } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
-import type { Timetable, TimetableSlot, Course, Lecturer, Day } from '../lib/types';
+import type { Timetable, TimetableSlot, Course, Lecturer, Day, Complaint } from '../lib/types';
 import TimetableGrid, {
   DAY_LABELS,
   SLOT_END_MAP,
   SLOT_END_OPTIONS,
 } from '../components/ui/TimetableGrid';
 import toast from 'react-hot-toast';
+import { formatDate } from '../utils/dateFormatter';
 
 interface EditingCell { day: Day; startTime: string; endTime: string; existingSlot?: TimetableSlot }
+
+const cap = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 
 const GenTimetablePage = () => {
   const { id: timetableId } = useParams<{ id: string }>();
@@ -19,6 +22,7 @@ const GenTimetablePage = () => {
   const [timetable,    setTimetable]    = useState<Timetable | null>(null);
   const [courses,      setCourses]      = useState<Course[]>([]);
   const [lecturers,    setLecturers]    = useState<Lecturer[]>([]);
+  const [complaints,   setComplaints]   = useState<Complaint[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [editingCell,  setEditingCell]  = useState<EditingCell | null>(null);
   const [formCourse,   setFormCourse]   = useState('');
@@ -29,6 +33,9 @@ const GenTimetablePage = () => {
   const [generating,   setGenerating]   = useState(false);
   const [publishing,   setPublishing]   = useState(false);
   const [conflicts,    setConflicts]    = useState<{ type: string; details: string }[]>([]);
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [responseText, setResponseText] = useState('');
+  const [sendingResp,  setSendingResp]  = useState(false);
 
   useEffect(() => {
     if (!timetableId) return;
@@ -37,12 +44,14 @@ const GenTimetablePage = () => {
       try {
         const tt = await api.get<Timetable>(`/timetables/${timetableId}`);
         setTimetable(tt);
-        const [c, l] = await Promise.all([
+        const [c, l, comps] = await Promise.all([
           api.get<Course[]>(`/courses?department=${tt.department.id}&level=${tt.level}`),
           api.get<Lecturer[]>('/lecturers'),
+          api.get<Complaint[]>('/complaints').catch(() => [] as Complaint[]),
         ]);
         setCourses(c);
         setLecturers(l);
+        setComplaints(comps);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Failed to load timetable');
       } finally {
@@ -146,13 +155,36 @@ const GenTimetablePage = () => {
     try {
       await api.patch(`/timetables/${timetableId}/status`, { status: 'PUBLISHED' });
       setTimetable(prev => prev ? { ...prev, status: 'PUBLISHED' } : prev);
-      toast.success('Timetable published!');
+      toast.success(timetable?.status === 'PUBLISHED' ? 'Changes published!' : 'Timetable published!');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to publish');
     } finally {
       setPublishing(false);
     }
   };
+
+  const handleRespond = async (id: string) => {
+    if (!responseText.trim()) { toast.error('Please type a response'); return; }
+    setSendingResp(true);
+    try {
+      await api.patch(`/complaints/${id}/respond`, { adminResponse: responseText.trim() });
+      setComplaints(prev =>
+        prev.map(c => c.id === id ? { ...c, status: 'RESOLVED', adminResponse: responseText.trim() } : c)
+      );
+      setRespondingId(null);
+      setResponseText('');
+      toast.success('Response sent');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send response');
+    } finally {
+      setSendingResp(false);
+    }
+  };
+
+  const relevantComplaints = useMemo(() => {
+    const codes = new Set(courses.map(c => c.code));
+    return complaints.filter(c => c.course?.code ? codes.has(c.course.code) : false);
+  }, [complaints, courses]);
 
   if (loading) {
     return (
@@ -165,11 +197,12 @@ const GenTimetablePage = () => {
   if (!timetable) return <p className="text-center text-[var(--gray-500)] py-12">Timetable not found.</p>;
 
   const slots = timetable.slots ?? [];
+  const isPublished = timetable.status === 'PUBLISHED';
 
   return (
     <div className="min-h-full">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex items-start justify-between mb-1 gap-4 flex-wrap">
         <div>
           <button
@@ -187,38 +220,45 @@ const GenTimetablePage = () => {
             <span className="text-xs text-[var(--gray-500)]">{timetable.academicYear}</span>
             <span className="text-[var(--gray-300)]">·</span>
             <span className={`text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-              timetable.status === 'PUBLISHED'
+              isPublished
                 ? 'bg-green-50 text-green-600 border-green-100'
                 : 'bg-amber-50 text-amber-600 border-amber-100'
             }`}>{timetable.status}</span>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {timetable.status !== 'PUBLISHED' && (
+          {!isPublished && (
             <button
               onClick={handleGenerate}
               disabled={generating}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--gray-200)] bg-white text-sm font-medium text-[var(--gray-700)] hover:bg-[var(--gray-50)] transition-colors disabled:opacity-40"
             >
-              <Wand2 className="w-4 h-4" /> {generating ? 'Generating…' : 'Auto-Generate'}
+              <Wand2 className="w-4 h-4" /> {generating ? 'Generating...' : 'Auto-Generate'}
             </button>
           )}
-          {timetable.status !== 'PUBLISHED' && (
-            <button
-              onClick={handlePublish}
-              disabled={publishing}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white transition-opacity disabled:opacity-40"
-              style={{ backgroundColor: 'var(--primary-200)' }}
-            >
-              <CheckCircle className="w-4 h-4" /> {publishing ? 'Publishing…' : 'Publish'}
-            </button>
-          )}
+          <button
+            onClick={handlePublish}
+            disabled={publishing}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white transition-opacity disabled:opacity-40"
+            style={{ backgroundColor: 'var(--primary-200)' }}
+          >
+            <CheckCircle className="w-4 h-4" />
+            {publishing ? 'Publishing...' : isPublished ? 'Publish Changes' : 'Publish'}
+          </button>
         </div>
       </div>
 
+      {isPublished && (
+        <div className="mt-3 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5">
+          <span className="text-xs text-blue-700">
+            This timetable is published. You can still edit slots and click <strong>Publish Changes</strong> to push updates to lecturers and students.
+          </span>
+        </div>
+      )}
+
       <div className="h-px w-full bg-[var(--gray-200)] my-5" />
 
-      {/* ── Timetable Grid ── */}
+      {/* Timetable Grid */}
       <TimetableGrid
         slots={slots}
         renderSlotCard={(slot, isDouble) => (
@@ -228,7 +268,7 @@ const GenTimetablePage = () => {
           >
             {isDouble && (
               <span className="text-[8px] uppercase tracking-widest text-[var(--primary-300)] font-bold mb-0.5">
-                4h · Double
+                4h - Double
               </span>
             )}
             <p className="text-[10px] font-bold text-[var(--primary-400)] truncate">{slot.course.code}</p>
@@ -243,14 +283,136 @@ const GenTimetablePage = () => {
         )}
         renderEmpty={(day, startTime) => (
           <button
-            onClick={() => timetable.status !== 'PUBLISHED' && openCell(day, startTime, SLOT_END_MAP[startTime])}
-            disabled={timetable.status === 'PUBLISHED'}
-            className="w-full h-full min-h-[52px] rounded-xl border border-dashed border-[var(--gray-200)] hover:border-[var(--primary-200)] hover:bg-[var(--primary-200)]/5 transition-all disabled:cursor-default disabled:hover:border-[var(--gray-200)] disabled:hover:bg-transparent"
+            onClick={() => openCell(day, startTime, SLOT_END_MAP[startTime])}
+            className="w-full h-full min-h-[52px] rounded-xl border border-dashed border-[var(--gray-200)] hover:border-[var(--primary-200)] hover:bg-[var(--primary-200)]/5 transition-all"
           />
         )}
       />
 
-      {/* ── Slot Edit Modal ── */}
+      {/* Complaints for this timetable */}
+      <div className="mt-10">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquareWarning className="w-5 h-5 text-[var(--primary-400)]" />
+          <h2 className="text-base font-bold text-[var(--gray-dark)]">Complaints</h2>
+          {relevantComplaints.length > 0 && (
+            <span className="text-xs font-semibold text-white bg-orange-400 px-2 py-0.5 rounded-full">
+              {relevantComplaints.filter(c => c.status === 'PENDING').length} pending
+            </span>
+          )}
+        </div>
+        <div className="h-px w-full bg-[var(--gray-200)] mb-4" />
+
+        {relevantComplaints.length === 0 ? (
+          <div className="bg-[var(--gray-50)] border border-[var(--gray-150)] rounded-2xl p-8 text-center">
+            <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+            <p className="text-sm text-[var(--gray-500)]">No complaints for this timetable yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {relevantComplaints.map(c => {
+              const name = c.lecturer
+                ? `${c.lecturer.firstName} ${c.lecturer.lastName}`
+                : c.student
+                ? `${c.student.firstName} ${c.student.lastName}`
+                : c.submitterRole;
+              const isResponding = respondingId === c.id;
+
+              return (
+                <div key={c.id} className="bg-white rounded-2xl border border-[var(--gray-150)] p-5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[var(--primary-200)]/20 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-[var(--primary-400)]">{name.charAt(0)}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--gray-dark)]">{name}</p>
+                        <p className="text-[10px] text-[var(--gray-400)]">
+                          {c.submitterRole} · {c.course?.code ?? 'No course'} · {formatDate(c.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    {c.status === 'RESOLVED' ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full shrink-0">
+                        <CheckCircle className="w-3 h-3" /> Resolved
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-500 bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-full shrink-0">
+                        <AlertTriangle className="w-3 h-3" /> Pending
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-sm text-[var(--gray-700)] leading-relaxed mb-2">{c.description}</p>
+
+                  {/* Requested time for lecturer */}
+                  {c.requestedDay && (
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <span className="text-[10px] text-[var(--gray-400)] font-medium uppercase tracking-wide">Requested:</span>
+                      <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                        <CalendarDays className="w-3 h-3" /> {cap(c.requestedDay)}
+                      </span>
+                      {c.requestedStartTime && c.requestedEndTime && (
+                        <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                          <Clock className="w-3 h-3" /> {c.requestedStartTime} to {c.requestedEndTime}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Existing admin response */}
+                  {c.adminResponse && (
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 mb-2">
+                      <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide mb-0.5">Your Response</p>
+                      <p className="text-xs text-emerald-800">{c.adminResponse}</p>
+                    </div>
+                  )}
+
+                  {/* Respond form */}
+                  {c.status === 'PENDING' && (
+                    isResponding ? (
+                      <div className="mt-3 space-y-2">
+                        <textarea
+                          value={responseText}
+                          onChange={e => setResponseText(e.target.value)}
+                          rows={2}
+                          placeholder="Type your response..."
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--gray-200)] focus:outline-none focus:border-[var(--primary-200)] resize-none"
+                          autoFocus
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            onClick={() => { setRespondingId(null); setResponseText(''); }}
+                            className="px-3 py-1.5 text-xs rounded-lg border border-[var(--gray-200)] text-[var(--gray-600)] hover:bg-[var(--gray-50)]"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleRespond(c.id)}
+                            disabled={sendingResp}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-[var(--primary-400)] text-white font-medium hover:opacity-90 disabled:opacity-40"
+                          >
+                            <Send className="w-3 h-3" />
+                            {sendingResp ? 'Sending...' : 'Send'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setRespondingId(c.id); setResponseText(''); }}
+                        className="mt-2 text-xs text-[var(--primary-400)] hover:underline font-medium"
+                      >
+                        Respond to this complaint
+                      </button>
+                    )
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Slot Edit Modal */}
       {editingCell && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm flex flex-col max-h-[90vh] overflow-y-auto">
@@ -260,7 +422,7 @@ const GenTimetablePage = () => {
                   {editingCell.existingSlot ? 'Edit Slot' : 'Add Course'}
                 </h3>
                 <p className="text-xs text-[var(--gray-500)] mt-0.5">
-                  {DAY_LABELS[editingCell.day]} · {editingCell.startTime} – {formEndTime}
+                  {DAY_LABELS[editingCell.day]} · {editingCell.startTime} to {formEndTime}
                 </p>
               </div>
               <button
@@ -286,7 +448,6 @@ const GenTimetablePage = () => {
                 </div>
               )}
 
-              {/* Duration / end time selector */}
               <div>
                 <label className="text-xs font-medium text-[var(--gray-700)] block mb-1">Duration</label>
                 <select
@@ -298,7 +459,7 @@ const GenTimetablePage = () => {
                     const hours = parseInt(end, 10) - parseInt(editingCell.startTime, 10);
                     return (
                       <option key={end} value={end}>
-                        {editingCell.startTime} – {end} · {hours}h
+                        {editingCell.startTime} to {end} · {hours}h
                         {hours >= 4 ? ' (Double Period)' : ''}
                       </option>
                     );
@@ -313,9 +474,9 @@ const GenTimetablePage = () => {
                   onChange={e => setFormCourse(e.target.value)}
                   className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--gray-200)] focus:outline-none focus:border-[var(--primary-200)] text-[var(--gray-dark)]"
                 >
-                  <option value="">Select course…</option>
+                  <option value="">Select course...</option>
                   {courses.map(c => (
-                    <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
+                    <option key={c.id} value={c.id}>{c.code}: {c.name}</option>
                   ))}
                 </select>
               </div>
@@ -327,7 +488,7 @@ const GenTimetablePage = () => {
                   onChange={e => setFormLecturer(e.target.value)}
                   className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--gray-200)] focus:outline-none focus:border-[var(--primary-200)] text-[var(--gray-dark)]"
                 >
-                  <option value="">Select lecturer…</option>
+                  <option value="">Select lecturer...</option>
                   {lecturers.map(l => (
                     <option key={l.id} value={l.id}>
                       {l.firstName} {l.lastName} ({l.staffId})
@@ -371,7 +532,7 @@ const GenTimetablePage = () => {
                   className="px-4 py-2 rounded-xl text-sm font-medium text-[var(--gray-dark)] transition-opacity disabled:opacity-40"
                   style={{ backgroundColor: 'var(--primary-200)' }}
                 >
-                  {saving ? 'Saving…' : 'Save'}
+                  {saving ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </div>

@@ -105,7 +105,7 @@ export interface TimetableSlot {
     semester: Semester;
     academicYear?: string;
     status?: TimetableStatus;
-    department?: { name: string; code: string };
+    department?: { id: string; name: string; code: string };
   };
 }
 
@@ -130,9 +130,14 @@ export interface Complaint {
   description: string;
   level?: Level;
   status: ComplaintStatus;
+  adminResponse?: string | null;
+  requestedDay?: string | null;
+  requestedStartTime?: string | null;
+  requestedEndTime?: string | null;
   resolvedById?: string;
   resolvedAt?: string;
   createdAt: string;
+  updatedAt?: string;
   course?:    { code: string; name: string };
   lecturer?:  { id: string; firstName: string; lastName: string };
   student?:   { id: string; firstName: string; lastName: string };

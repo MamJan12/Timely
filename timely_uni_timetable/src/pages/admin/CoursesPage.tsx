@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, MoreHorizontal, X, Pencil, Trash2, UserPlus, UserMinus } from 'lucide-react';
+import { Plus, X, UserPlus, UserMinus } from 'lucide-react';
+import RowActions from '../../components/ui/RowActions';
 import { api } from '../../lib/api';
 import type { Course, Department, Lecturer, Level } from '../../lib/types';
 import Button from '../../components/ui/Button';
@@ -33,7 +34,6 @@ const CoursesPage = () => {
   const [saving,       setSaving]       = useState(false);
   const [search,       setSearch]       = useState('');
   const [levelFilter,  setLevelFilter]  = useState<Level | null>(null);
-  const [openMenuId,     setOpenMenuId]     = useState<string | null>(null);
   const [deleteTarget,   setDeleteTarget]   = useState<Course | null>(null);
   const [newLecId,       setNewLecId]       = useState('');
   const [semesterFilter, setSemesterFilter] = useState<'ALL' | 1 | 2>('ALL');
@@ -50,23 +50,11 @@ const CoursesPage = () => {
 
   useEffect(() => { load().finally(() => setLoading(false)); }, []);
 
-  // Close dropdown when clicking outside any menu container
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest('[data-menu-container]')) {
-        setOpenMenuId(null);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
   const openCreate = () => { setEditing(null); setForm(EMPTY); setNewLecId(''); setShowForm(true); };
   const openEdit = (c: Course) => {
     setEditing(c);
     setForm({ code: c.code, name: c.name, credits: String(c.credits), departmentId: c.department.id, level: c.level, isShared: c.isShared });
     setNewLecId('');
-    setOpenMenuId(null);
     setShowForm(true);
   };
   const closeForm = () => { setShowForm(false); setEditing(null); setForm(EMPTY); };
@@ -241,32 +229,7 @@ const CoursesPage = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex justify-center">
-                    <div className="relative" data-menu-container>
-                      <button
-                        onClick={() => setOpenMenuId(prev => prev === c.id ? null : c.id)}
-                        className="px-3 py-1.5 text-xs font-semibold border border-[var(--gray-200)] rounded-lg hover:bg-[var(--gray-100)] text-[var(--gray-700)] flex items-center gap-1 transition-colors"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                      {openMenuId === c.id && (
-                        <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-[var(--gray-150)] z-20 py-1 overflow-hidden">
-                          <button
-                            onClick={() => openEdit(c)}
-                            className="w-full text-left px-4 py-2 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-50)] flex items-center gap-2"
-                          >
-                            <Pencil className="w-3.5 h-3.5" /> Edit
-                          </button>
-                          <button
-                            onClick={() => { setDeleteTarget(c); setOpenMenuId(null); }}
-                            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <RowActions onEdit={() => openEdit(c)} onDelete={() => setDeleteTarget(c)} />
                 </TableCell>
               </tr>
             ))}
@@ -339,7 +302,7 @@ const CoursesPage = () => {
                 <span className="text-xs text-[var(--gray-700)]">Shared course (used across departments)</span>
               </label>
 
-              {/* Lecturer assignment — only when editing */}
+              {/* Lecturer assignment - only when editing */}
               {editing && (
                 <div className="pt-3 border-t border-[var(--gray-150)] space-y-2">
                   <p className="text-xs font-semibold text-[var(--gray-700)]">Assigned Lecturers</p>

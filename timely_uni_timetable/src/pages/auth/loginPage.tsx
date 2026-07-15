@@ -273,7 +273,7 @@ const LoginPage = () => {
           className="text-sm text-white/50 leading-relaxed"
           style={{ opacity: phase === 1 ? 1 : 0, transition: 'opacity 0.6s ease 0.6s' }}
         >
-          Timely keeps schedules, lecturers, and students in perfect sync — all from one place.
+          Timely keeps schedules, lecturers, and students in perfect sync, all from one place.
         </p>
       </div>
 
@@ -513,7 +513,7 @@ const LoginPage = () => {
 
                   {isLecturer && (
                     <p className="text-[10px] text-[var(--gray-400)] bg-[var(--gray-50)] border border-[var(--gray-150)] rounded-xl px-3 py-2">
-                      A unique Staff ID will be auto-generated for your account after registration. Save it — you can use it to log in.
+                      A unique Staff ID will be auto-generated for your account after registration. Save it, you can use it to log in.
                     </p>
                   )}
 
@@ -552,7 +552,7 @@ const LoginPage = () => {
                 <p className="text-xs text-[var(--gray-500)] mt-1.5">
                   {wasClaim
                     ? 'Your account has been linked to your existing lecturer profile.'
-                    : 'Your staff ID has been generated. Save it — you can use it to sign in.'}
+                    : 'Your staff ID has been generated. Save it, you can use it to sign in.'}
                 </p>
               </div>
 

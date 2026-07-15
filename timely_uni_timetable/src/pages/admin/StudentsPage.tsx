@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
+import RowActions from '../../components/ui/RowActions';
 import { api } from '../../lib/api';
 import type { Student, Department, Level } from '../../lib/types';
 import Button from '../../components/ui/Button';
@@ -136,10 +137,7 @@ const StudentsPage = () => {
                 <TableCell>{s.department.name}</TableCell>
                 <TableCell className="text-[var(--gray-500)]">{formatDate(s.createdAt)}</TableCell>
                 <TableCell>
-                  <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => openEdit(s)} className="p-1.5 rounded-lg hover:bg-[var(--gray-100)]"><Pencil className="w-3.5 h-3.5 text-[var(--gray-500)]" /></button>
-                    <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 text-red-500" /></button>
-                  </div>
+                  <RowActions onEdit={() => openEdit(s)} onDelete={() => handleDelete(s.id)} />
                 </TableCell>
               </tr>
             ))}

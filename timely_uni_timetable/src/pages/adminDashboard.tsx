@@ -47,7 +47,7 @@ const AdminDashboard: React.FC = () => {
         setStats(s);
         setComplaints(c.slice(0, 5));
       } catch {
-        // stats fail silently — page still usable
+        // stats fail silently - page still usable
       } finally {
         setLoading(false);
       }
@@ -139,7 +139,7 @@ const AdminDashboard: React.FC = () => {
         ) : complaints.length === 0 ? (
           <div className="bg-white rounded-2xl border border-[var(--gray-150)] p-8 text-center">
             <CheckCircle className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
-            <p className="text-sm text-[var(--gray-500)]">No pending complaints — all clear!</p>
+            <p className="text-sm text-[var(--gray-500)]">No pending complaints. All clear!</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">

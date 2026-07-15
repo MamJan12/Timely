@@ -88,7 +88,7 @@ const StudentDashboardPage: React.FC = () => {
             }`}
           >
             {formBSubmitted
-              ? `Form B submitted — ${selectedCount} course${selectedCount !== 1 ? 's' : ''} selected`
+              ? `Form B submitted: ${selectedCount} course${selectedCount !== 1 ? 's' : ''} selected`
               : 'Form B not yet submitted'}
           </p>
           <p

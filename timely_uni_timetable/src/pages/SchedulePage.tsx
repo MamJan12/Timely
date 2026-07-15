@@ -187,7 +187,7 @@ const SchedulePage = () => {
             <div key={tt.id}
               className="relative group bg-white border border-[var(--gray-150)] rounded-2xl p-5 hover:shadow-md hover:border-[var(--primary-200)] transition-all duration-200">
 
-              {/* Delete button — appears on hover */}
+              {/* Delete button - appears on hover */}
               <button
                 onClick={e => { e.stopPropagation(); setDeleteTarget(tt); }}
                 title="Delete timetable"
